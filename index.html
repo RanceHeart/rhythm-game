@@ -170,7 +170,11 @@
     .song-strip { display:flex; position:absolute; gap:12px; left:0; top:0; padding: 7px 20px; width:max-content; }
     .song-card { width:220px; height:78px; padding:15px; border:1px solid rgba(255,255,255,.13); background:#11111a; text-align:left; cursor:pointer; }
     .song-card span { display:block; }
+    .song-card .song-artist { margin-top:5px; color:var(--text-dim); font-size:8px; }
     .song-card.selected { color:var(--accent-3); border-color:var(--accent-3); box-shadow: inset 0 0 20px rgba(255,204,51,.08); }
+    .music-credit { margin:18px 0 0 172px; color:var(--text-dim); font-size:8px; line-height:1.6; letter-spacing:.13em; }
+    .music-credit a { color:var(--accent-2); text-decoration:none; }
+    .music-credit a:hover { text-decoration:underline; }
     .back-top { margin-top:35px; border:0; background:transparent; color:var(--text-dim); font-size:10px; text-transform:uppercase; cursor:pointer; }
 
     /* GAME */
@@ -194,7 +198,8 @@
     .flight-svg { z-index:3; }
     #sceneFrame { fill:none; stroke:rgba(51,255,204,.16); stroke-width:1.2; filter:url(#softGlow); }
     .hud { position:absolute; z-index:20; top:var(--safe-top); left:28px; right:28px; display:grid; grid-template-columns:1fr auto 1fr; align-items:start; pointer-events:none; }
-    .hud-block { display:flex; flex-direction:column; gap:4px; }
+    .hud-block { display:flex; min-width:0; flex-direction:column; gap:4px; }
+    .hud-block:first-child { padding-left:8px; }
     .hud-block.right { align-items:flex-end; }
     .hud-block.right .hud-value { transform-origin:right center; }
     .hud-label { font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.32em; }
@@ -204,8 +209,8 @@
     #comboValue { font-size:clamp(28px,4.5vw,72px); color:var(--accent-2); line-height:.8; }
     #multiplier { display:inline-block; color:var(--accent-3); font-size:10px; margin-top:9px; padding:4px 9px; border:1px solid currentColor; }
     .progress-wrap { display:flex; align-items:center; gap:10px; }
-    .progress-copy { display:grid; justify-items:end; gap:3px; }
-    #timeValue { color:rgba(255,255,255,.7); font-variant-numeric:tabular-nums; }
+    .progress-copy { display:grid; min-width:58px; justify-items:end; gap:4px; line-height:1.1; }
+    #timeValue { display:block; color:rgba(255,255,255,.72); font-variant-numeric:tabular-nums; }
     .progress-svg { width:42px; height:42px; transform:rotate(-90deg); filter:drop-shadow(0 0 6px rgba(51,255,204,.5)); }
     #progressTrack { fill:none; stroke:rgba(255,255,255,.1); stroke-width:3; }
     #progressPath { fill:none; stroke:var(--accent-2); stroke-width:3; stroke-linecap:square; }
@@ -240,7 +245,46 @@
     }
     .miss-flash { position:absolute; inset:0; z-index:41; pointer-events:none; opacity:0; background:rgba(255,20,60,.2); }
     .black-frame { position:absolute; inset:0; z-index:60; pointer-events:none; background:#000; opacity:0; }
-    .milestone-bar { position:absolute; z-index:38; left:0; right:0; top:-25%; height:22%; background:linear-gradient(90deg,transparent,var(--accent-2),#fff,var(--accent-2),transparent); opacity:0; filter:blur(3px); }
+    .milestone-bar {
+      position:absolute;
+      z-index:38;
+      left:50%;
+      top:calc(var(--safe-top) + clamp(82px, 12vh, 122px));
+      width:min(390px,72vw);
+      height:42px;
+      display:grid;
+      place-items:center;
+      color:var(--accent-2);
+      opacity:0;
+      transform:translate(-50%,-8px) scaleX(.08);
+      transform-origin:center;
+      pointer-events:none;
+      filter:blur(7px);
+    }
+    .milestone-bar::before, .milestone-bar::after {
+      content:"";
+      position:absolute;
+      top:50%;
+      width:42%;
+      height:1px;
+      background:linear-gradient(90deg,transparent,currentColor);
+      box-shadow:0 0 12px currentColor;
+    }
+    .milestone-bar::before { left:0; }
+    .milestone-bar::after { right:0; transform:scaleX(-1); }
+    .milestone-bar span {
+      position:relative;
+      z-index:1;
+      min-width:112px;
+      padding:7px 12px;
+      border:1px solid currentColor;
+      background:rgba(10,10,15,.92);
+      box-shadow:0 0 24px rgba(51,255,204,.2), inset 0 0 16px rgba(51,255,204,.08);
+      text-align:center;
+      font-size:10px;
+      letter-spacing:.24em;
+      white-space:nowrap;
+    }
     .feedback { position:absolute; z-index:30; left:50%; top:65%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
     #judgeLabel { font-size:clamp(27px,4.5vw,68px); line-height:1; opacity:0; text-shadow:0 0 20px currentColor; }
     #timingLabel { margin-top:8px; font-size:10px; color:var(--text-dim); opacity:0; }
@@ -285,12 +329,15 @@
       .pause-tag { display:none; }
       .song-card { width:190px; }
       .song-strip { gap:10px; }
+      .music-credit { margin-left:0; }
       .result-page { padding:22px; }
     }
     @media (max-height: 520px) {
       .hud { top:10px; }
       .feedback { top:72%; }
       .pause-tag { display:none; }
+      .settings-page { overflow-y:auto; place-items:start center; }
+      .settings-panel { margin:16px 0; }
     }
     @media (prefers-reduced-motion: reduce) {
       .scanlines { opacity:.05; }
@@ -315,7 +362,7 @@
           <path id="logoMorph" visibility="hidden" d="M20 125 L45 35 L105 35 L130 125 L98 125 L92 103 L57 103 L51 125Z M155 125 L155 35 L235 35 L255 58 L235 80 L255 103 L235 125Z M282 35 L316 35 L350 91 L384 35 L418 35 L366 125 L334 125Z M445 35 L477 35 L477 69 L538 69 L538 35 L570 35 L570 125 L538 125 L538 94 L477 94 L477 125 L445 125Z M600 35 L632 35 L680 91 L728 35 L760 35 L760 125 L728 125 L728 80 L694 121 L666 121 L632 80 L632 125 L600 125Z"/>
         </svg>
         <div class="title-meta intro-item">
-          <span class="micro">128 BPM</span><span class="micro">3 procedural mixes</span><span class="micro">60 second charts</span>
+          <span class="micro">120–128 BPM</span><span class="micro">3 CC-licensed tracks</span><span class="micro">60 second charts</span>
         </div>
         <button id="startButton" class="start-prompt intro-item" type="button">
           <span class="keycap" id="keycapLabel">SPACE</span>
@@ -342,13 +389,14 @@
           <div class="setting-label">Song</div>
           <div id="songViewport" class="song-viewport">
             <div id="songStrip" class="song-strip">
-              <button class="song-card selected" data-song="0" type="button"><span>NEON CIRCUIT</span><span class="micro">128 BPM · 60 SEC</span></button>
-              <button class="song-card" data-song="1" type="button"><span>VOID SIGNAL</span><span class="micro">128 BPM · 60 SEC</span></button>
-              <button class="song-card" data-song="2" type="button"><span>CHROMA RUSH</span><span class="micro">128 BPM · 60 SEC</span></button>
+              <button class="song-card selected" data-song="0" type="button"><span>SYNTH PULSE</span><span class="micro">128 BPM · 60 SEC</span><span class="song-artist">ALEXANDER BLU</span></button>
+              <button class="song-card" data-song="1" type="button"><span>SYNTH MOVEMENT</span><span class="micro">120 BPM · 60 SEC</span><span class="song-artist">ALEXANDER BLU</span></button>
+              <button class="song-card" data-song="2" type="button"><span>ARP STRINGS</span><span class="micro">120 BPM · 60 SEC</span><span class="song-artist">ALEXANDER BLU</span></button>
             </div>
           </div>
           <div id="songNumber" class="micro">01</div>
         </div>
+        <p class="music-credit">MUSIC LOOPS BY ALEXANDER BLU · <a id="musicSourceLink" href="https://orangefreesounds.com/128-bpm-electronic-synth-pulse-loop/" target="_blank" rel="noreferrer">CC BY 4.0 SOURCE ↗</a></p>
         <button id="backTop" class="back-top" type="button">↑ Back to launch</button>
       </div>
     </div>
@@ -397,11 +445,12 @@
       </div>
       <div id="hitFlash" class="flash"></div>
       <div id="missFlash" class="miss-flash"></div>
-      <div id="milestoneBar" class="milestone-bar"></div>
+      <div id="milestoneBar" class="milestone-bar"><span id="milestoneText">CHAIN 5</span></div>
       <div id="blackFrame" class="black-frame"></div>
       <div class="pause-tag">SPACE / F / J / TAP · HIT THE CORE</div>
     </div>
   </section>
+  <audio id="musicPlayer" preload="auto" loop></audio>
 
   <section id="resultsScreen" class="screen" aria-label="Results">
     <div class="result-page">
@@ -467,21 +516,32 @@ const gameShell = $('#gameShell');
 const stage = $('#stage');
 const flightSvg = $('#flightSvg');
 const particlesLayer = $('#particles');
+const musicPlayer = $('#musicPlayer');
 const COLORS = ['#ff3366', '#33ffcc', '#ffcc33', '#8a5cff'];
-const BPM = 128;
-const STEP = 60 / BPM / 4;
 const TRAVEL = 1.65;
-const TOTAL_STEPS = 512;
-const SONG_DURATION = TOTAL_STEPS * STEP;
+const SONG_DURATION = 60;
 const SONGS = [
-  { name:'NEON CIRCUIT', roots:[55,65.41,49,73.42], intervals:[0,7,12,15], palette:0 },
-  { name:'VOID SIGNAL', roots:[46.25,55,41.2,61.74], intervals:[0,3,10,12], palette:3 },
-  { name:'CHROMA RUSH', roots:[65.41,82.41,73.42,98], intervals:[0,5,9,12], palette:2 }
+  {
+    name:'SYNTH PULSE', artist:'Alexander Blu', bpm:128, palette:0,
+    url:'https://orangefreesounds.com/wp-content/uploads/2026/04/128-bpm-electronic-synth-pulse-loop.mp3',
+    source:'https://orangefreesounds.com/128-bpm-electronic-synth-pulse-loop/'
+  },
+  {
+    name:'SYNTH MOVEMENT', artist:'Alexander Blu', bpm:120, palette:3,
+    url:'https://orangefreesounds.com/wp-content/uploads/2022/05/Synth-movement-music-loop-120-bpm.mp3',
+    source:'https://orangefreesounds.com/synth-movement-music-loop-120-bpm/'
+  },
+  {
+    name:'ARP STRINGS', artist:'Alexander Blu', bpm:120, palette:2,
+    url:'https://orangefreesounds.com/wp-content/uploads/2023/05/Arp-string-synth-loop-120-bpm.mp3',
+    source:'https://orangefreesounds.com/arp-string-synth-loop-120-bpm/'
+  }
 ];
+const stepDuration = () => 60 / SONGS[selectedSong].bpm / 4;
+const chartStepCount = () => Math.floor(SONG_DURATION / stepDuration());
 
 let state = 'TITLE';
 let audioCtx;
-let masterGain;
 let volume = .75;
 let selectedSong = 0;
 let hitKey = 'Space';
@@ -569,12 +629,13 @@ function setupDraggables() {
   createDraggable('#songStrip', {
     container: '#songViewport',
     y: false,
-    x: { snap: 232 },
+    x: { snap: () => window.matchMedia('(max-width: 700px)').matches ? 200 : 232 },
     releaseEase: spring({ stiffness: 140, damping: 14 }),
     onGrab: self => animate(self.$target, { scale: [.99, 1.015, 1], duration: 260, ease: 'outElastic(1,.5)' }),
     onRelease: self => {
       animate(self.$target, { scale: [.985, 1.01, 1], duration: 380, ease: 'outElastic(1,.5)' });
-      selectSong(Math.max(0, Math.min(2, Math.round(-self.x / 232))));
+      const cardStep = window.matchMedia('(max-width: 700px)').matches ? 200 : 232;
+      selectSong(Math.max(0, Math.min(2, Math.round(-self.x / cardStep))));
     }
   });
 }
@@ -586,14 +647,20 @@ function selectSong(index) {
     card.setAttribute('aria-pressed', i === index);
   });
   $('#songNumber').textContent = String(index + 1).padStart(2, '0');
+  $('#musicSourceLink').href = SONGS[index].source;
   document.documentElement.style.setProperty('--accent-4', COLORS[SONGS[index].palette]);
+  if (state === 'TITLE') {
+    musicPlayer.src = SONGS[index].url;
+    musicPlayer.load();
+  }
 }
 
 function buildNoteSteps() {
-  return Array.from({ length: TOTAL_STEPS }, (_, step) => step).filter(step => {
+  const totalSteps = chartStepCount();
+  return Array.from({ length: totalSteps }, (_, step) => step).filter(step => {
     const section = Math.floor(step / 64);
     const inBar = step % 16;
-    if (step < 20 || step >= TOTAL_STEPS - 12) return false;
+    if (step < 20 || step >= totalSteps - 12) return false;
     if (section === 0) return inBar === 4 || inBar === 12;
     if (section === 3) return [0, 6, 8, 14].includes(inBar);
     if (section === 4) return [2, 6, 10, 14].includes(inBar);
@@ -606,78 +673,15 @@ function buildNoteSteps() {
 async function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = volume * .32;
-    masterGain.connect(audioCtx.destination);
   }
   await audioCtx.resume();
+  if (musicPlayer.src !== SONGS[selectedSong].url) musicPlayer.src = SONGS[selectedSong].url;
+  musicPlayer.currentTime = 0;
+  musicPlayer.volume = 0;
+  await musicPlayer.play();
 }
 
-function kick(time, accent = false, level = 1) {
-  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(accent ? 150 : 120, time);
-  osc.frequency.exponentialRampToValueAtTime(42, time + .13);
-  gain.gain.setValueAtTime((accent ? 1 : .7) * level, time);
-  gain.gain.exponentialRampToValueAtTime(.001, time + .22);
-  osc.connect(gain).connect(masterGain); osc.start(time); osc.stop(time + .23);
-}
-function snare(time, level = 1) {
-  const length = Math.floor(audioCtx.sampleRate * .12);
-  const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
-  const noise = audioCtx.createBufferSource(), filter = audioCtx.createBiquadFilter(), gain = audioCtx.createGain();
-  noise.buffer = buffer; filter.type = 'highpass'; filter.frequency.value = 1100;
-  gain.gain.setValueAtTime(.42 * level, time); gain.gain.exponentialRampToValueAtTime(.001, time + .12);
-  noise.connect(filter).connect(gain).connect(masterGain); noise.start(time);
-}
-function hat(time, open = false, level = 1) {
-  const length = Math.floor(audioCtx.sampleRate * (open ? .09 : .035));
-  const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
-  const noise = audioCtx.createBufferSource(), filter = audioCtx.createBiquadFilter(), gain = audioCtx.createGain();
-  noise.buffer = buffer; filter.type = 'highpass'; filter.frequency.value = 7000;
-  gain.gain.setValueAtTime((open ? .11 : .07) * level, time); gain.gain.exponentialRampToValueAtTime(.001, time + (open ? .09 : .035));
-  noise.connect(filter).connect(gain).connect(masterGain); noise.start(time);
-}
-function bass(time, index, level = 1) {
-  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-  const tones = SONGS[selectedSong].roots;
-  osc.type = 'triangle'; osc.frequency.value = tones[Math.floor(index / 16) % tones.length];
-  gain.gain.setValueAtTime(.18 * level, time); gain.gain.exponentialRampToValueAtTime(.001, time + .18);
-  osc.connect(gain).connect(masterGain); osc.start(time); osc.stop(time + .2);
-}
-function arp(time, index, level = 1) {
-  const osc = audioCtx.createOscillator(), filter = audioCtx.createBiquadFilter(), gain = audioCtx.createGain();
-  const song = SONGS[selectedSong];
-  const root = song.roots[Math.floor(index / 64) % song.roots.length] * 4;
-  osc.type = selectedSong === 1 ? 'sine' : selectedSong === 2 ? 'sawtooth' : 'triangle';
-  osc.frequency.value = root * Math.pow(2, song.intervals[Math.floor(index / 2) % song.intervals.length] / 12);
-  filter.type = 'lowpass'; filter.frequency.value = selectedSong === 2 ? 2400 : 1500;
-  gain.gain.setValueAtTime(.0001, time);
-  gain.gain.exponentialRampToValueAtTime(.06 * level, time + .012);
-  gain.gain.exponentialRampToValueAtTime(.001, time + .16);
-  osc.connect(filter).connect(gain).connect(masterGain); osc.start(time); osc.stop(time + .18);
-}
-function scheduleAudioStep(index, time) {
-  const inBar = index % 16;
-  const section = Math.floor(index / 64);
-  const fade = section === 7 ? Math.max(.12, 1 - (index % 64) / 68) : 1;
-  const intro = section === 0;
-  const bridge = section === 4;
-  const halfTime = section === 3;
-  const climax = section === 6;
-  const kickPattern = halfTime ? [0, 7, 10] : bridge ? [0, 10] : selectedSong === 2 ? [0, 3, 8, 11, 14] : [0, 4, 8, 12];
-  const snarePattern = halfTime ? [8] : selectedSong === 1 ? [4, 12] : [4, 12, 14];
-  if ((!intro || index >= 32) && kickPattern.includes(inBar)) {
-    kick(time, inBar === 0 || (climax && inBar === 8), fade);
-    if (inBar === 0 || inBar === 8 || climax) bass(time, index, fade);
-  }
-  if (!intro && snarePattern.includes(inBar)) snare(time, bridge ? .6 * fade : fade);
-  if (index % (intro ? 2 : climax ? 1 : 2) === 0) hat(time, inBar === 14, fade);
-  if (!intro && !bridge && index % 2 === 0) arp(time, index, (climax ? 1.25 : .75) * fade);
+function scheduleBeatStep(index, time) {
   const delay = Math.max(0, (time - audioCtx.currentTime) * 1000);
   setTimeout(() => onBeat(index), delay);
 }
@@ -685,8 +689,10 @@ function runScheduler(token) {
   clearInterval(scheduler);
   scheduler = setInterval(() => {
     if (state !== 'PLAYING' || token !== gameToken) return;
-    while (nextAudioStep < TOTAL_STEPS && songStart + nextAudioStep * STEP < audioCtx.currentTime + .12) {
-      scheduleAudioStep(nextAudioStep, songStart + nextAudioStep * STEP);
+    const step = stepDuration();
+    const totalSteps = chartStepCount();
+    while (nextAudioStep < totalSteps && songStart + nextAudioStep * step < audioCtx.currentTime + .12) {
+      scheduleBeatStep(nextAudioStep, songStart + nextAudioStep * step);
       nextAudioStep++;
     }
   }, 25);
@@ -698,7 +704,7 @@ function onBeat(index) {
   waapi.animate('.grid-line', {
     scale: [0.992, strong ? 1.035 : 1.02, .997, 1],
     opacity: [.45, strong ? 1 : .7, .55],
-    duration: STEP * 1000 * 1.8,
+    duration: stepDuration() * 1000 * 1.8,
     delay: stagger(5, { from: 'center' }),
     ease: 'out(4)'
   });
@@ -899,7 +905,7 @@ function hitFeedback(tier, delta, reason) {
   const amplitude = tier === 'perfect' ? 3 : 1.5;
   waapi.animate(app, { translateX:['0px',`${amplitude}px`,`${-amplitude*.8}px`,`${amplitude*.35}px`,'0px'], translateY:['0px','-2px','1px','0px'], scale:[1,.997,1.002,1], duration:130, ease:'out(5)' });
   // Layer 7: overlapping camera pulse.
-  animate(gameShell, { scale:[1,.995,1.025,.998,1], rotate:[0,-.12,.08,0], duration:STEP*2000, delay:95, ease:'outElastic(1,.72)' });
+  animate(gameShell, { scale:[1,.995,1.025,.998,1], rotate:[0,-.12,.08,0], duration:stepDuration()*2000, delay:95, ease:'outElastic(1,.72)' });
 }
 
 function burstParticles(count, color) {
@@ -930,13 +936,23 @@ function burstParticles(count, color) {
 
 function comboMilestone() {
   const allHud = $$('.hud-block, .combo-wrap');
+  $('#milestoneText').textContent = `CHAIN ${combo}`;
   const celebration = createTimeline({ defaults:{ ease:'outElastic(1,.5)' } });
   celebration
-    .add(allHud, { scale:[1,.98], duration:100, delay:stagger(12) })
-    .add('#milestoneBar', { opacity:[0,1,.25,0], translateY:['0vh','110vh','98vh','105vh'], scaleY:[.7,1.35,.95,1], duration:650 }, '<')
-    .add('#comboValue', { scale:[.82,1.55,.9,1.12,1], rotate:[0,-6,3,0], duration:650 }, '<+=60')
-    .add('#multiplier', { scale:[.85,1.35,.94,1], rotate:[0,12,-6,0], duration:600 }, '<+=40');
-  waapi.animate(app, { translateX:['0px','5px','-4px','3px','-1px','0px'], translateY:['0px','-3px','2px','0px'], scale:[1,.996,1.003,1], duration:160, ease:'out(5)' });
+    .add(allHud, { scale:[1,.985,1.012,1], duration:260, delay:stagger(12) })
+    .add('#milestoneBar', {
+      opacity:[0,.22,1,1,.7,0],
+      translateX:['-50%','-50%'],
+      translateY:['-14px','3px','-2px','0px','0px','-5px'],
+      scaleX:[.08,.48,1.08,.985,1,1.02],
+      scaleY:[.82,1.12,.98,1,1,.96],
+      filter:['blur(8px)','blur(3px)','blur(0px)','blur(0px)','blur(1px)','blur(5px)'],
+      duration:920,
+      ease:'outElastic(1,.62)'
+    }, '<+=35')
+    .add('#comboValue', { scale:[.9,1.32,.96,1.06,1], rotate:[0,-3,1,0], duration:620 }, '<+=70')
+    .add('#multiplier', { scale:[.92,1.22,.97,1], rotate:[0,6,-2,0], duration:560 }, '<+=45');
+  waapi.animate(app, { translateX:['0px','2px','-1.5px','.5px','0px'], translateY:['0px','-1px','.5px','0px'], duration:145, ease:'out(5)' });
 }
 
 function setupProgress() {
@@ -959,7 +975,14 @@ async function startGame() {
   if (state === 'TRANSITION') return;
   const fromResults = state === 'RESULTS';
   state = 'TRANSITION';
-  await initAudio();
+  try {
+    await initAudio();
+  } catch (error) {
+    console.error('Unable to start the selected music track.', error);
+    state = fromResults ? 'RESULTS' : 'TITLE';
+    if (!fromResults) $('#startText').textContent = 'Audio unavailable · retry';
+    return;
+  }
   gameToken++;
   const token = gameToken;
   clearInterval(scheduler); cancelAnimationFrame(frameRequest);
@@ -983,10 +1006,14 @@ async function startGame() {
     .add('.hud > *', { opacity:[0,1], translateY:[-22,5,0], scale:[.94,1.04,1], delay:stagger(70), duration:550 }, '<')
     .call(() => {
       state='PLAYING';
-      songStart=audioCtx.currentTime+.14;
+      musicPlayer.currentTime=0;
+      musicPlayer.volume=volume*.72;
+      musicPlayer.play().catch(() => {});
+      songStart=audioCtx.currentTime;
       setupProgress(); runScheduler(token); gameLoop(token);
+      const step = stepDuration();
       buildNoteSteps().forEach((stepIndex, i) => {
-        const targetTime=songStart+stepIndex*STEP;
+        const targetTime=songStart+stepIndex*step;
         const timeout=Math.max(0,(targetTime-TRAVEL-audioCtx.currentTime)*1000);
         setTimeout(()=>{ if(state==='PLAYING'&&token===gameToken) createNote(i,targetTime); },timeout);
       });
@@ -1007,6 +1034,7 @@ function gameLoop(token) {
 function finishGame() {
   if (state !== 'PLAYING') return;
   state='TRANSITION'; clearInterval(scheduler); cancelAnimationFrame(frameRequest);
+  musicPlayer.pause();
   notes.filter(n=>!n.judged).forEach(n=>registerMiss(n));
   const collapse=createTimeline({defaults:{ease:'outElastic(1,.6)'}});
   collapse
@@ -1068,7 +1096,7 @@ $('#volumeSlider').addEventListener('input',event=>{
   volume=Number(event.target.value)/100;
   event.target.style.setProperty('--volume',`${event.target.value}%`);
   $('#volumeValue').textContent=`${event.target.value}%`;
-  if(masterGain&&audioCtx) masterGain.gain.setTargetAtTime(volume*.32,audioCtx.currentTime,.02);
+  musicPlayer.volume=volume*.72;
 });
 $$('.song-card').forEach(card=>card.addEventListener('click',()=>selectSong(Number(card.dataset.song))));
 $('#bindingButton').addEventListener('click',()=>{
@@ -1076,8 +1104,11 @@ $('#bindingButton').addEventListener('click',()=>{
   animate('#bindingButton',{scale:[1,.92,1.12,1],duration:420,ease:'outElastic(1,.5)'});
 });
 window.addEventListener('keydown',event=>handleInput(event));
-gameScreen.addEventListener('pointerdown',event=>{ if(event.pointerType!=='mouse') handleInput(event); });
-document.addEventListener('visibilitychange',()=>{ if(document.hidden&&state==='PLAYING'){ masterGain?.gain.setTargetAtTime(0,audioCtx.currentTime,.02); } else if(masterGain&&audioCtx){ masterGain.gain.setTargetAtTime(volume*.32,audioCtx.currentTime,.04); } });
+gameScreen.addEventListener('pointerdown',event=>{ if(event.button === undefined || event.button === 0) handleInput(event); });
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&state==='PLAYING') musicPlayer.volume=0;
+  else if(state==='PLAYING') musicPlayer.volume=volume*.72;
+});
 
 buildGridAndAmbient();
 setupTitle();
