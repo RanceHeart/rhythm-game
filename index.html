@@ -362,7 +362,7 @@
           <path id="logoMorph" visibility="hidden" d="M20 125 L45 35 L105 35 L130 125 L98 125 L92 103 L57 103 L51 125Z M155 125 L155 35 L235 35 L255 58 L235 80 L255 103 L235 125Z M282 35 L316 35 L350 91 L384 35 L418 35 L366 125 L334 125Z M445 35 L477 35 L477 69 L538 69 L538 35 L570 35 L570 125 L538 125 L538 94 L477 94 L477 125 L445 125Z M600 35 L632 35 L680 91 L728 35 L760 35 L760 125 L728 125 L728 80 L694 121 L666 121 L632 80 L632 125 L600 125Z"/>
         </svg>
         <div class="title-meta intro-item">
-          <span class="micro">120–128 BPM</span><span class="micro">3 CC-licensed tracks</span><span class="micro">60 second charts</span>
+          <span class="micro">120–128 BPM</span><span class="micro">3 CC-licensed tracks</span><span class="micro">120 second charts</span>
         </div>
         <button id="startButton" class="start-prompt intro-item" type="button">
           <span class="keycap" id="keycapLabel">SPACE</span>
@@ -389,14 +389,14 @@
           <div class="setting-label">Song</div>
           <div id="songViewport" class="song-viewport">
             <div id="songStrip" class="song-strip">
-              <button class="song-card selected" data-song="0" type="button"><span>SYNTH PULSE</span><span class="micro">128 BPM · 60 SEC</span><span class="song-artist">ALEXANDER BLU</span></button>
-              <button class="song-card" data-song="1" type="button"><span>SYNTH MOVEMENT</span><span class="micro">120 BPM · 60 SEC</span><span class="song-artist">ALEXANDER BLU</span></button>
-              <button class="song-card" data-song="2" type="button"><span>ARP STRINGS</span><span class="micro">120 BPM · 60 SEC</span><span class="song-artist">ALEXANDER BLU</span></button>
+              <button class="song-card selected" data-song="0" type="button"><span>DIGITAL LEMONADE</span><span class="micro">120 BPM · 3:00</span><span class="song-artist">KEVIN MACLEOD</span></button>
+              <button class="song-card" data-song="1" type="button"><span>VOLTAIC</span><span class="micro">120 BPM · 3:16</span><span class="song-artist">KEVIN MACLEOD</span></button>
+              <button class="song-card" data-song="2" type="button"><span>EDM DETECTION</span><span class="micro">128 BPM · 6:06</span><span class="song-artist">KEVIN MACLEOD</span></button>
             </div>
           </div>
           <div id="songNumber" class="micro">01</div>
         </div>
-        <p class="music-credit">MUSIC LOOPS BY ALEXANDER BLU · <a id="musicSourceLink" href="https://orangefreesounds.com/128-bpm-electronic-synth-pulse-loop/" target="_blank" rel="noreferrer">CC BY 4.0 SOURCE ↗</a></p>
+        <p class="music-credit">MUSIC BY KEVIN MACLEOD · <a id="musicSourceLink" href="https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1700010" target="_blank" rel="noreferrer">CC BY 4.0 SOURCE ↗</a></p>
         <button id="backTop" class="back-top" type="button">↑ Back to launch</button>
       </div>
     </div>
@@ -430,7 +430,7 @@
         <div class="hud-block right">
           <span class="hud-label">Progress</span>
           <div class="progress-wrap">
-            <span class="progress-copy"><span id="accuracyValue" class="micro">100.0%</span><span id="timeValue" class="micro">1:00</span></span>
+            <span class="progress-copy"><span id="accuracyValue" class="micro">100.0%</span><span id="timeValue" class="micro">2:00</span></span>
             <svg class="progress-svg" viewBox="0 0 44 44">
               <circle id="progressTrack" cx="22" cy="22" r="18"/>
               <circle id="progressPath" cx="22" cy="22" r="18"/>
@@ -450,7 +450,7 @@
       <div class="pause-tag">SPACE / F / J / TAP · HIT THE CORE</div>
     </div>
   </section>
-  <audio id="musicPlayer" preload="auto" loop></audio>
+  <audio id="musicPlayer" preload="auto"></audio>
 
   <section id="resultsScreen" class="screen" aria-label="Results">
     <div class="result-page">
@@ -519,37 +519,39 @@ const particlesLayer = $('#particles');
 const musicPlayer = $('#musicPlayer');
 const COLORS = ['#ff3366', '#33ffcc', '#ffcc33', '#8a5cff'];
 const TRAVEL = 1.65;
-const SONG_DURATION = 60;
+const SONG_DURATION = 120;
 const SONGS = [
   {
-    name:'SYNTH PULSE', artist:'Alexander Blu', bpm:128, palette:0,
-    url:'https://orangefreesounds.com/wp-content/uploads/2026/04/128-bpm-electronic-synth-pulse-loop.mp3',
-    source:'https://orangefreesounds.com/128-bpm-electronic-synth-pulse-loop/'
+    name:'DIGITAL LEMONADE', artist:'Kevin MacLeod', bpm:120, palette:0,
+    beatOffset:0, chartStart:0,
+    url:'https://incompetech.com/music/royalty-free/mp3-royaltyfree/Digital%20Lemonade.mp3',
+    source:'https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1700010'
   },
   {
-    name:'SYNTH MOVEMENT', artist:'Alexander Blu', bpm:120, palette:3,
-    url:'https://orangefreesounds.com/wp-content/uploads/2022/05/Synth-movement-music-loop-120-bpm.mp3',
-    source:'https://orangefreesounds.com/synth-movement-music-loop-120-bpm/'
+    name:'VOLTAIC', artist:'Kevin MacLeod', bpm:120, palette:3,
+    beatOffset:0, chartStart:16,
+    url:'https://incompetech.com/music/royalty-free/mp3-royaltyfree/Voltaic.mp3',
+    source:'https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600056'
   },
   {
-    name:'ARP STRINGS', artist:'Alexander Blu', bpm:120, palette:2,
-    url:'https://orangefreesounds.com/wp-content/uploads/2023/05/Arp-string-synth-loop-120-bpm.mp3',
-    source:'https://orangefreesounds.com/arp-string-synth-loop-120-bpm/'
+    name:'EDM DETECTION MODE', artist:'Kevin MacLeod', bpm:128, palette:2,
+    beatOffset:0, chartStart:120,
+    url:'https://incompetech.com/music/royalty-free/mp3-royaltyfree/EDM%20Detection%20Mode.mp3',
+    source:'https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1500026'
   }
 ];
 const stepDuration = () => 60 / SONGS[selectedSong].bpm / 4;
-const chartStepCount = () => Math.floor(SONG_DURATION / stepDuration());
 
 let state = 'TITLE';
-let audioCtx;
 let volume = .75;
 let selectedSong = 0;
 let hitKey = 'Space';
 let waitingForBinding = false;
-let songStart = 0;
-let scheduler;
 let frameRequest;
-let nextAudioStep = 0;
+let beatMap = [];
+let noteChart = [];
+let nextBeat = 0;
+let nextNote = 0;
 let notes = [];
 let score = 0;
 let combo = 0;
@@ -656,7 +658,7 @@ function selectSong(index) {
 }
 
 function buildNoteSteps() {
-  const totalSteps = chartStepCount();
+  const totalSteps = beatMap.length;
   return Array.from({ length: totalSteps }, (_, step) => step).filter(step => {
     const section = Math.floor(step / 64);
     const inBar = step % 16;
@@ -670,32 +672,53 @@ function buildNoteSteps() {
   });
 }
 
-async function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function generateBeatMap(song) {
+  const step = 60 / song.bpm / 4;
+  const chartEnd = song.chartStart + SONG_DURATION;
+  const firstStep = Math.ceil((song.chartStart - song.beatOffset) / step - 1e-6);
+  const timestamps = [];
+  for (let index = firstStep; ; index++) {
+    const timestamp = song.beatOffset + index * step;
+    if (timestamp > chartEnd + 1e-6) break;
+    timestamps.push(timestamp);
   }
-  await audioCtx.resume();
-  if (musicPlayer.src !== SONGS[selectedSong].url) musicPlayer.src = SONGS[selectedSong].url;
-  musicPlayer.currentTime = 0;
-  musicPlayer.volume = 0;
-  await musicPlayer.play();
+  return timestamps;
 }
 
-function scheduleBeatStep(index, time) {
-  const delay = Math.max(0, (time - audioCtx.currentTime) * 1000);
-  setTimeout(() => onBeat(index), delay);
+function waitForMediaEvent(eventName) {
+  return new Promise((resolve, reject) => {
+    const onEvent = () => { cleanup(); resolve(); };
+    const onError = () => { cleanup(); reject(musicPlayer.error || new Error('Audio failed to load')); };
+    const cleanup = () => {
+      musicPlayer.removeEventListener(eventName, onEvent);
+      musicPlayer.removeEventListener('error', onError);
+    };
+    musicPlayer.addEventListener(eventName, onEvent, { once:true });
+    musicPlayer.addEventListener('error', onError, { once:true });
+  });
 }
-function runScheduler(token) {
-  clearInterval(scheduler);
-  scheduler = setInterval(() => {
-    if (state !== 'PLAYING' || token !== gameToken) return;
-    const step = stepDuration();
-    const totalSteps = chartStepCount();
-    while (nextAudioStep < totalSteps && songStart + nextAudioStep * step < audioCtx.currentTime + .12) {
-      scheduleBeatStep(nextAudioStep, songStart + nextAudioStep * step);
-      nextAudioStep++;
-    }
-  }, 25);
+
+function applyVolume() {
+  if (!musicPlayer) return;
+  musicPlayer.volume = Math.max(0, Math.min(1, volume));
+}
+
+async function initAudio() {
+  const song = SONGS[selectedSong];
+  if (musicPlayer.src !== song.url) {
+    musicPlayer.src = song.url;
+    musicPlayer.load();
+  }
+  if (musicPlayer.readyState < HTMLMediaElement.HAVE_METADATA) {
+    await waitForMediaEvent('loadedmetadata');
+  }
+  if (musicPlayer.duration < song.chartStart + SONG_DURATION) {
+    throw new Error(`${song.name} is too short for its chart`);
+  }
+  musicPlayer.currentTime = song.chartStart;
+  applyVolume();
+  musicPlayer.muted = true;
+  await musicPlayer.play();
 }
 
 function onBeat(index) {
@@ -763,29 +786,40 @@ function createNote(index, targetTime) {
   if (comboShape !== '#shapeCircle') {
     animate(shapePath, { d: svg.morphTo(comboShape), duration: 540, ease: 'outElastic(1,.55)' });
   }
-  const item = { index, targetTime, el, path, judged: false, animation: null };
-  notes.push(item);
-  const motion = svg.createMotionPath(path);
-  item.animation = animate(el, {
-    ...motion,
-    scale: [.25, 1.18, .98, 1, 1.08],
-    opacity: [0, 1, 1, 1],
-    duration: TRAVEL * 1000,
-    ease: 'in(2.1)'
-  });
-  const echoes = [1,2].map(n => {
+  const echoes = [1, 2].map(n => {
     const echo = el.cloneNode(true);
-    echo.classList.add('echo'); stage.insertBefore(echo, el);
-    const echoPath = makeCurve(start, index, `echo${n}`);
-    const echoMotion = svg.createMotionPath(echoPath);
-    animate(echo, {
-      ...echoMotion, scale: [.1, 1.12, .92, 1], opacity: [0, .24, 0],
-      duration: TRAVEL * 1000, delay: stagger(34)(echo, n - 1, 2), ease: 'in(2)',
-      onComplete: () => { echo.remove(); echoPath.remove(); }
-    });
+    echo.classList.add('echo');
+    echo.dataset.echo = n;
+    stage.insertBefore(echo, el);
     return echo;
   });
-  item.echoes = echoes;
+  const item = {
+    index, targetTime, el, path, echoes, judged:false,
+    pathLength:path.getTotalLength()
+  };
+  notes.push(item);
+  updateNotePosition(item, musicPlayer.currentTime);
+}
+
+function updateNotePosition(note, audioTime) {
+  const linear = Math.max(0, Math.min(1, (audioTime - (note.targetTime - TRAVEL)) / TRAVEL));
+  const draw = (element, delay = 0, maxOpacity = 1) => {
+    const progress = Math.max(0, linear - delay);
+    const point = note.path.getPointAtLength(Math.pow(progress, 2.1) * note.pathLength);
+    const scale = .25 + progress * .83;
+    const x = point.x * stage.clientWidth / 1000;
+    const y = point.y * stage.clientHeight / 562;
+    element.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    element.style.opacity = progress === 0 ? 0 : Math.min(maxOpacity, progress * 5 * maxOpacity);
+  };
+  draw(note.el);
+  note.echoes.forEach((echo, index) => draw(echo, (index + 1) * .025, .22));
+}
+
+function removeNoteVisual(note) {
+  note.el?.remove();
+  note.path?.remove();
+  note.echoes?.forEach(echo => echo.remove());
 }
 
 function multiplierFor(value) {
@@ -832,7 +866,7 @@ function handleInput(event) {
 }
 
 function judgeHit() {
-  const now = audioCtx.currentTime;
+  const now = musicPlayer.currentTime;
   const pending = notes.filter(n => !n.judged);
   const closest = pending.reduce((best, note) => !best || Math.abs(note.targetTime - now) < Math.abs(best.targetTime - now) ? note : best, null);
   animate('#targetRing', { scale: [1, .95], duration: 65, ease: 'inQuad' });
@@ -843,7 +877,7 @@ function judgeHit() {
   const delta = now - closest.targetTime;
   const abs = Math.abs(delta);
   const tier = abs <= .025 ? 'perfect' : abs <= .075 ? 'good' : 'ok';
-  closest.judged = true; closest.el.remove(); closest.path.remove();
+  closest.judged = true; removeNoteVisual(closest);
   combo++; maxCombo = Math.max(maxCombo, combo); judged++; stats[tier]++;
   const base = tier === 'perfect' ? 300 : tier === 'good' ? 200 : 100;
   score += base * multiplierFor(combo);
@@ -855,7 +889,7 @@ function judgeHit() {
 function registerMiss(note, reason = 'MISS') {
   if (note && note.judged) return;
   if (note) {
-    note.judged = true; note.el.remove(); note.path.remove();
+    note.judged = true; removeNoteVisual(note);
   }
   combo = 0; judged++; stats.miss++; updateHud();
   hitFeedback('miss', 0, reason);
@@ -985,10 +1019,13 @@ async function startGame() {
   }
   gameToken++;
   const token = gameToken;
-  clearInterval(scheduler); cancelAnimationFrame(frameRequest);
-  notes.forEach(n => { n.el?.remove(); n.path?.remove(); }); notes = [];
+  cancelAnimationFrame(frameRequest);
+  notes.forEach(removeNoteVisual); notes = [];
   flightSvg.innerHTML = '';
-  score=0; combo=0; maxCombo=0; judged=0; stats={perfect:0,good:0,ok:0,miss:0}; section=-1; nextAudioStep=0;
+  score=0; combo=0; maxCombo=0; judged=0; stats={perfect:0,good:0,ok:0,miss:0}; section=-1;
+  beatMap=generateBeatMap(SONGS[selectedSong]);
+  noteChart=buildNoteSteps().map((stepIndex, index) => ({ index, targetTime:beatMap[stepIndex] }));
+  nextBeat=0; nextNote=0;
   updateHud();
   $('#targetRing').style.opacity=1;
   $('#sceneFrame').style.opacity=1;
@@ -1006,34 +1043,38 @@ async function startGame() {
     .add('.hud > *', { opacity:[0,1], translateY:[-22,5,0], scale:[.94,1.04,1], delay:stagger(70), duration:550 }, '<')
     .call(() => {
       state='PLAYING';
-      musicPlayer.currentTime=0;
-      musicPlayer.volume=volume*.72;
+      musicPlayer.currentTime=SONGS[selectedSong].chartStart;
+      applyVolume();
+      musicPlayer.muted=document.hidden;
       musicPlayer.play().catch(() => {});
-      songStart=audioCtx.currentTime;
-      setupProgress(); runScheduler(token); gameLoop(token);
-      const step = stepDuration();
-      buildNoteSteps().forEach((stepIndex, i) => {
-        const targetTime=songStart+stepIndex*step;
-        const timeout=Math.max(0,(targetTime-TRAVEL-audioCtx.currentTime)*1000);
-        setTimeout(()=>{ if(state==='PLAYING'&&token===gameToken) createNote(i,targetTime); },timeout);
-      });
+      setupProgress();
+      gameLoop(token);
     });
 }
 
 function gameLoop(token) {
   if (state !== 'PLAYING' || token !== gameToken) return;
-  const now = audioCtx.currentTime;
-  updateProgress(now - songStart);
+  const now = musicPlayer.currentTime;
+  const chartStart = SONGS[selectedSong].chartStart;
+  updateProgress(now - chartStart);
+  while (nextBeat < beatMap.length && beatMap[nextBeat] <= now) {
+    onBeat(nextBeat++);
+  }
+  while (nextNote < noteChart.length && noteChart[nextNote].targetTime - TRAVEL <= now) {
+    const chartNote = noteChart[nextNote++];
+    createNote(chartNote.index, chartNote.targetTime);
+  }
   notes.forEach(note => {
+    if (!note.judged) updateNotePosition(note, now);
     if (!note.judged && now > note.targetTime + .15) registerMiss(note);
   });
-  if (now >= songStart + SONG_DURATION + .45) finishGame();
+  if (musicPlayer.ended || now >= chartStart + SONG_DURATION + .45) finishGame();
   else frameRequest=requestAnimationFrame(()=>gameLoop(token));
 }
 
 function finishGame() {
   if (state !== 'PLAYING') return;
-  state='TRANSITION'; clearInterval(scheduler); cancelAnimationFrame(frameRequest);
+  state='TRANSITION'; cancelAnimationFrame(frameRequest);
   musicPlayer.pause();
   notes.filter(n=>!n.judged).forEach(n=>registerMiss(n));
   const collapse=createTimeline({defaults:{ease:'outElastic(1,.6)'}});
@@ -1092,12 +1133,14 @@ $('#backTop').addEventListener('click',()=>titleScreen.scrollTo({top:0,behavior:
 $('#detailsButton').addEventListener('click',()=>$('#statsPanel').scrollIntoView({behavior:'smooth'}));
 $('#resultsTop').addEventListener('click',()=>resultsScreen.scrollTo({top:0,behavior:'smooth'}));
 $('#retryButton').addEventListener('click',()=>startGame());
-$('#volumeSlider').addEventListener('input',event=>{
+function updateVolume(event) {
   volume=Number(event.target.value)/100;
   event.target.style.setProperty('--volume',`${event.target.value}%`);
   $('#volumeValue').textContent=`${event.target.value}%`;
-  musicPlayer.volume=volume*.72;
-});
+  applyVolume();
+}
+$('#volumeSlider').addEventListener('input',updateVolume);
+$('#volumeSlider').addEventListener('change',updateVolume);
 $$('.song-card').forEach(card=>card.addEventListener('click',()=>selectSong(Number(card.dataset.song))));
 $('#bindingButton').addEventListener('click',()=>{
   waitingForBinding=true; $('#bindingButton').textContent='PRESS…';
@@ -1106,8 +1149,8 @@ $('#bindingButton').addEventListener('click',()=>{
 window.addEventListener('keydown',event=>handleInput(event));
 gameScreen.addEventListener('pointerdown',event=>{ if(event.button === undefined || event.button === 0) handleInput(event); });
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden&&state==='PLAYING') musicPlayer.volume=0;
-  else if(state==='PLAYING') musicPlayer.volume=volume*.72;
+  musicPlayer.muted=document.hidden&&state==='PLAYING';
+  if(!document.hidden) applyVolume();
 });
 
 buildGridAndAmbient();
@@ -1116,6 +1159,7 @@ setupDraggables();
 setupResultsScroll();
 selectSong(0);
 $('#volumeSlider').style.setProperty('--volume','75%');
+applyVolume();
 idleBreath=animate('#targetRing',{scale:[.97,1.035,.99,1],rotate:[0,2,-1,0],duration:1700,loop:true,ease:spring({stiffness:90,damping:11})});
 </script>
 </body>

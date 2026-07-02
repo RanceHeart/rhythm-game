@@ -20,11 +20,11 @@ After the run, scroll down for the full timing breakdown.
 
 ## Music
 
-The three 60-second charts use existing loops by Alexander Blu under the [Creative Commons Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/):
+The three 120-second charts use tracks by Kevin MacLeod under the [Creative Commons Attribution 4.0 license](https://creativecommons.org/licenses/by/4.0/). Note timing, animation, misses, and progress all follow the audio element's live playhead:
 
-- [128 BPM Electronic Synth Pulse Loop](https://orangefreesounds.com/128-bpm-electronic-synth-pulse-loop/)
-- [Synth Movement Music Loop — 120 BPM](https://orangefreesounds.com/synth-movement-music-loop-120-bpm/)
-- [Arp String Synth Loop — 120 BPM](https://orangefreesounds.com/arp-string-synth-loop-120-bpm/)
+- [Digital Lemonade — 120 BPM, 3:00](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1700010)
+- [Voltaic — 120 BPM, 3:16](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600056)
+- [EDM Detection Mode — 128 BPM, 6:06](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1500026)
 
 ## Animation showcase
 
