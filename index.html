@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%2333ffcc' d='M16 1 31 16 16 31 1 16z'/%3E%3Cpath fill='%230a0a0f' d='M16 8 24 16 16 24 8 16z'/%3E%3C/svg%3E">
+  <title>POLYRHYTHM // Neon Geometry</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-secondary: #12121a;
+      --accent-1: #ff3366;
+      --accent-2: #33ffcc;
+      --accent-3: #ffcc33;
+      --accent-4: #6633ff;
+      --text: #fff;
+      --text-dim: rgba(255,255,255,.42);
+      --glow-1: rgba(255,51,102,.3);
+      --glow-2: rgba(51,255,204,.3);
+      --safe-top: max(18px, env(safe-area-inset-top));
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+    body {
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 700;
+      letter-spacing: .08em;
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .app {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(102,51,255,.12), transparent 35%),
+        linear-gradient(145deg, #0d0d15, var(--bg) 55%);
+      transform-origin: 50% 50%;
+    }
+    .screen {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .screen.active { opacity: 1; visibility: visible; pointer-events: auto; }
+    .noise {
+      position: absolute;
+      inset: 0;
+      z-index: 80;
+      pointer-events: none;
+      opacity: .04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+    }
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      z-index: 79;
+      pointer-events: none;
+      opacity: .12;
+      background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,.45) 4px);
+    }
+    .kicker {
+      color: var(--accent-2);
+      font-size: clamp(9px, .8vw, 12px);
+      text-transform: uppercase;
+      letter-spacing: .35em;
+    }
+    .micro { font-size: clamp(8px, .72vw, 11px); color: var(--text-dim); text-transform: uppercase; }
+
+    /* TITLE */
+    #titleScreen {
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+    }
+    #titleScreen::-webkit-scrollbar, #resultsScreen::-webkit-scrollbar { display: none; }
+    .title-page {
+      position: relative;
+      min-height: 100%;
+      scroll-snap-align: start;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      padding: 32px;
+    }
+    .title-orbits { position: absolute; inset: 0; pointer-events: none; }
+    .orbit-path { fill: none; stroke: rgba(255,255,255,.09); stroke-width: 1; stroke-dasharray: 2 9; }
+    .orbiter { position: absolute; width: 10px; height: 10px; margin: -5px; background: var(--accent-2); box-shadow: 0 0 18px currentColor; }
+    .orbiter:nth-of-type(2) { border-radius: 50%; background: var(--accent-1); }
+    .title-stack { position: relative; z-index: 3; text-align: center; width: min(900px, 92vw); }
+    .logo-svg { width: min(780px, 83vw); overflow: visible; filter: drop-shadow(0 0 18px rgba(255,51,102,.35)); }
+    #logoPath { fill: none; stroke: var(--accent-1); stroke-width: 4; stroke-linejoin: bevel; }
+    .title-meta { display: flex; justify-content: center; gap: 24px; margin: 18px 0 42px; }
+    .start-prompt {
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(18,18,26,.7);
+      padding: 17px 26px;
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 32px rgba(102,51,255,.15), inset 0 0 18px rgba(255,255,255,.025);
+      clip-path: polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);
+    }
+    .keycap {
+      min-width: 54px;
+      padding: 6px 8px;
+      color: var(--bg);
+      background: var(--accent-3);
+      box-shadow: 0 0 16px rgba(255,204,51,.4);
+      font-size: 11px;
+    }
+    .scroll-cue {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      display: grid;
+      gap: 7px;
+      justify-items: center;
+      color: var(--text-dim);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .25em;
+    }
+    .scroll-cue::after { content:""; width: 1px; height: 28px; background: linear-gradient(var(--accent-2), transparent); }
+    .settings-page {
+      background:
+        linear-gradient(90deg, rgba(51,255,204,.03) 1px, transparent 1px),
+        linear-gradient(rgba(51,255,204,.03) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+    .settings-panel {
+      width: min(840px, 90vw);
+      padding: clamp(24px, 5vw, 58px);
+      border: 1px solid rgba(51,255,204,.2);
+      background: rgba(10,10,15,.9);
+      box-shadow: 0 0 70px rgba(51,255,204,.08);
+    }
+    .settings-panel h2 { font-size: clamp(28px, 5vw, 62px); margin: 6px 0 38px; letter-spacing: -.03em; }
+    .setting-row { display: grid; grid-template-columns: 150px 1fr 64px; align-items: center; gap: 22px; margin: 26px 0; }
+    .setting-label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; }
+    .slider-track { height: 30px; position: relative; cursor: ew-resize; }
+    .slider-track::before { content:""; position:absolute; left:0; right:0; top:14px; height:2px; background:rgba(255,255,255,.12); }
+    .slider-fill { position:absolute; top:14px; left:0; width:75%; height:2px; background:var(--accent-2); box-shadow:0 0 12px var(--accent-2); }
+    .slider-knob { position:absolute; left:calc(75% - 9px); top:6px; width:18px; height:18px; background:var(--accent-2); transform:rotate(45deg); box-shadow:0 0 16px var(--accent-2); }
+    .binding {
+      border: 1px solid rgba(255,255,255,.18);
+      background: transparent;
+      padding: 11px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .song-viewport { overflow: hidden; position: relative; height: 92px; cursor: grab; border-left: 2px solid var(--accent-4); }
+    .song-strip { display:flex; position:absolute; gap:12px; left:0; top:0; padding: 7px 20px; width:max-content; }
+    .song-card { width:220px; height:78px; padding:15px; border:1px solid rgba(255,255,255,.13); background:#11111a; }
+    .song-card.selected { color:var(--accent-3); border-color:var(--accent-3); box-shadow: inset 0 0 20px rgba(255,204,51,.08); }
+    .back-top { margin-top: 35px; color:var(--text-dim); font-size:10px; text-transform:uppercase; }
+
+    /* GAME */
+    #gameScreen { display:grid; place-items:center; background:var(--bg); }
+    .game-shell {
+      position: relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      aspect-ratio: 16 / 9;
+      max-height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 50%, rgba(102,51,255,.12), transparent 38%), #0a0a0f;
+      isolation: isolate;
+    }
+    .grid { position:absolute; inset:-8%; z-index:0; perspective:500px; opacity:.8; }
+    .grid-line { position:absolute; background:rgba(102,51,255,.12); box-shadow:0 0 4px rgba(102,51,255,.15); transform-origin:center; }
+    .grid-line.v { top:0; bottom:0; width:1px; }
+    .grid-line.h { left:0; right:0; height:1px; }
+    .ambient { position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .ambient-dot { position:absolute; width:3px; height:3px; background:var(--accent-4); opacity:.28; }
+    .scene-svg, .flight-svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+    .scene-svg { z-index:2; }
+    .flight-svg { z-index:3; }
+    #sceneFrame { fill:none; stroke:rgba(51,255,204,.16); stroke-width:1.2; filter:url(#softGlow); }
+    .hud { position:absolute; z-index:20; top:var(--safe-top); left:28px; right:28px; display:grid; grid-template-columns:1fr auto 1fr; align-items:start; pointer-events:none; }
+    .hud-block { display:flex; flex-direction:column; gap:4px; }
+    .hud-block.right { align-items:flex-end; }
+    .hud-block.right .hud-value { transform-origin:right center; }
+    .hud-label { font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.32em; }
+    .hud-value { font-variant-numeric:tabular-nums; font-size:clamp(19px,2.3vw,36px); line-height:1; letter-spacing:.08em; text-shadow:0 0 18px currentColor; }
+    #scoreValue { color:#fff; transform-origin:left center; }
+    .combo-wrap { text-align:center; min-width:160px; }
+    #comboValue { font-size:clamp(28px,4.5vw,72px); color:var(--accent-2); line-height:.8; }
+    #multiplier { display:inline-block; color:var(--accent-3); font-size:10px; margin-top:9px; padding:4px 9px; border:1px solid currentColor; }
+    .progress-wrap { display:flex; align-items:center; gap:10px; }
+    .progress-svg { width:42px; height:42px; transform:rotate(-90deg); filter:drop-shadow(0 0 6px rgba(51,255,204,.5)); }
+    #progressTrack { fill:none; stroke:rgba(255,255,255,.1); stroke-width:3; }
+    #progressPath { fill:none; stroke:var(--accent-2); stroke-width:3; stroke-linecap:square; }
+    .stage { position:absolute; inset:0; z-index:10; }
+    .target-wrap { position:absolute; left:50%; top:50%; width:132px; height:132px; margin:-66px; display:grid; place-items:center; z-index:8; }
+    .target-ring, .target-ring::before, .target-core { position:absolute; border-radius:50%; }
+    .target-ring { inset:0; border:2px solid var(--accent-2); box-shadow:0 0 18px var(--glow-2), inset 0 0 18px var(--glow-2); }
+    .target-ring::before { content:""; inset:11px; border:1px dashed rgba(255,255,255,.32); }
+    .target-core { width:44px; height:44px; border:3px solid var(--accent-1); background:rgba(255,51,102,.08); box-shadow:0 0 25px var(--glow-1); transform:rotate(45deg); }
+    .target-cross::before, .target-cross::after { content:""; position:absolute; left:50%; top:50%; background:rgba(255,255,255,.22); transform:translate(-50%,-50%); }
+    .target-cross::before { width:220px; height:1px; }
+    .target-cross::after { height:220px; width:1px; }
+    .note {
+      position:absolute;
+      z-index:7;
+      left:0;
+      top:0;
+      width:34px;
+      height:34px;
+      margin:-17px 0 0 -17px;
+      filter:drop-shadow(0 0 8px currentColor);
+      will-change:transform,opacity;
+    }
+    .note svg { width:100%; height:100%; overflow:visible; }
+    .note path { fill:rgba(10,10,15,.8); stroke:currentColor; stroke-width:3; vector-effect:non-scaling-stroke; }
+    .note::after { content:""; position:absolute; left:50%; top:50%; width:60px; height:3px; background:linear-gradient(90deg,currentColor,transparent); transform:translate(8px,-50%); opacity:.25; transform-origin:left; }
+    .note.echo { opacity:.22; filter:blur(.4px); }
+    .flash {
+      position:absolute; inset:0; z-index:40; pointer-events:none; opacity:0;
+      background:radial-gradient(circle at center, rgba(255,255,255,.95), rgba(255,204,51,.3) 12%, transparent 48%);
+      mix-blend-mode:screen;
+    }
+    .miss-flash { position:absolute; inset:0; z-index:41; pointer-events:none; opacity:0; background:rgba(255,20,60,.2); }
+    .black-frame { position:absolute; inset:0; z-index:60; pointer-events:none; background:#000; opacity:0; }
+    .milestone-bar { position:absolute; z-index:38; left:0; right:0; top:-25%; height:22%; background:linear-gradient(90deg,transparent,var(--accent-2),#fff,var(--accent-2),transparent); opacity:0; filter:blur(3px); }
+    .feedback { position:absolute; z-index:30; left:50%; top:65%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
+    #judgeLabel { font-size:clamp(27px,4.5vw,68px); line-height:1; opacity:0; text-shadow:0 0 20px currentColor; }
+    #timingLabel { margin-top:8px; font-size:10px; color:var(--text-dim); opacity:0; }
+    .score-pop { position:absolute; z-index:32; left:50%; top:58%; white-space:nowrap; font-size:15px; color:var(--accent-3); pointer-events:none; }
+    .char { display:inline-block; transform-origin:50% 100%; }
+    .particles { position:absolute; inset:0; z-index:25; pointer-events:none; }
+    .particle { position:absolute; left:0; top:0; width:7px; height:7px; margin:-3px; background:currentColor; box-shadow:0 0 9px currentColor; }
+    .particle.circle { border-radius:50%; }
+    .particle.diamond { transform:rotate(45deg); }
+    .pause-tag { position:absolute; left:24px; bottom:22px; z-index:22; color:var(--text-dim); font-size:9px; }
+
+    /* RESULTS */
+    #resultsScreen { overflow-y:auto; overflow-x:hidden; background:#09090e; scrollbar-width:none; }
+    .result-page { min-height:100%; scroll-snap-align:start; position:relative; display:grid; place-items:center; padding:34px; overflow:hidden; }
+    .result-main { text-align:center; width:min(900px,92vw); }
+    .rank { font-size:clamp(120px,25vw,330px); line-height:.65; color:var(--accent-3); letter-spacing:-.12em; text-shadow:0 0 50px rgba(255,204,51,.28); margin-left:-.12em; }
+    .final-score { font-size:clamp(30px,6vw,86px); margin:30px 0 8px; font-variant-numeric:tabular-nums; }
+    .result-combo { color:var(--accent-2); font-size:clamp(15px,2vw,25px); min-height:32px; }
+    .retry { margin-top:35px; display:inline-block; color:var(--text-dim); font-size:11px; padding:14px 22px; border:1px solid rgba(255,255,255,.12); }
+    .stats-page { background:linear-gradient(145deg,rgba(102,51,255,.08),transparent); }
+    .stats-panel { width:min(850px,90vw); }
+    .stats-panel h2 { font-size:clamp(32px,6vw,72px); margin:0 0 42px; }
+    .stat-row { display:grid; grid-template-columns:120px 1fr 60px; gap:18px; align-items:center; margin:18px 0; }
+    .stat-name { color:var(--text-dim); font-size:10px; }
+    .stat-track { height:5px; background:rgba(255,255,255,.08); }
+    .stat-fill { height:100%; width:0; background:currentColor; box-shadow:0 0 12px currentColor; }
+    .stat-count { text-align:right; font-variant-numeric:tabular-nums; }
+    .perfect-color { color:var(--accent-3); } .good-color { color:var(--accent-2); }
+    .ok-color { color:var(--accent-4); } .miss-color { color:var(--accent-1); }
+    .accuracy { margin-top:42px; font-size:clamp(34px,8vw,92px); line-height:1; }
+
+    @media (max-width: 700px) {
+      .title-meta { flex-direction:column; gap:7px; margin-bottom:30px; }
+      .setting-row { grid-template-columns:85px 1fr 50px; gap:12px; }
+      .hud { left:14px; right:14px; }
+      .combo-wrap { min-width:100px; }
+      .target-wrap { width:100px; height:100px; margin:-50px; }
+      .progress-svg { width:32px; height:32px; }
+      .pause-tag { display:none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .scanlines { opacity:.05; }
+    }
+  </style>
+</head>
+<body>
+<main id="app" class="app">
+  <section id="titleScreen" class="screen active" aria-label="Title and settings">
+    <div class="title-page">
+      <svg class="title-orbits" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <path id="orbitOne" class="orbit-path" d="M120 300 C180 45 820 45 880 300 C820 555 180 555 120 300Z"/>
+        <path id="orbitTwo" class="orbit-path" d="M500 62 C760 100 850 465 500 538 C150 465 240 100 500 62Z"/>
+      </svg>
+      <div id="orbiterOne" class="orbiter"></div><div id="orbiterTwo" class="orbiter"></div>
+      <div class="title-stack">
+        <div class="kicker intro-item">A synesthetic geometry experiment</div>
+        <svg class="logo-svg intro-item" viewBox="0 0 800 180" role="img" aria-label="Polyrhythm">
+          <path id="logoPath" d="M20 140 L20 42 L95 42 L120 67 L95 92 L50 92 L50 140 M150 140 L150 42 L230 42 L250 62 L250 120 L230 140 Z M285 42 L315 42 L350 100 L385 42 L415 42 L365 140 L335 140 Z M445 42 L475 42 L475 78 L540 78 L540 42 L570 42 L570 140 L540 140 L540 104 L475 104 L475 140 L445 140 Z M605 42 L635 42 L680 104 L725 42 L755 42 L755 140 L725 140 L725 86 L690 136 L670 136 L635 86 L635 140 L605 140Z"/>
+          <path id="logoMorph" visibility="hidden" d="M20 125 L45 35 L105 35 L130 125 L98 125 L92 103 L57 103 L51 125Z M155 125 L155 35 L235 35 L255 58 L235 80 L255 103 L235 125Z M282 35 L316 35 L350 91 L384 35 L418 35 L366 125 L334 125Z M445 35 L477 35 L477 69 L538 69 L538 35 L570 35 L570 125 L538 125 L538 94 L477 94 L477 125 L445 125Z M600 35 L632 35 L680 91 L728 35 L760 35 L760 125 L728 125 L728 80 L694 121 L666 121 L632 80 L632 125 L600 125Z"/>
+        </svg>
+        <div class="title-meta intro-item">
+          <span class="micro">128 BPM</span><span class="micro">Procedural audio</span><span class="micro">Anime.js v4</span>
+        </div>
+        <button id="startButton" class="start-prompt intro-item" type="button">
+          <span class="keycap" id="keycapLabel">SPACE</span>
+          <span id="startText">Press to start</span>
+        </button>
+      </div>
+      <div class="scroll-cue intro-item">Scroll for settings</div>
+    </div>
+    <div class="title-page settings-page">
+      <div id="settingsPanel" class="settings-panel">
+        <div class="kicker">Signal configuration</div>
+        <h2>SETTINGS</h2>
+        <div class="setting-row">
+          <div class="setting-label">Master gain</div>
+          <div id="volumeTrack" class="slider-track">
+            <div id="volumeFill" class="slider-fill"></div>
+            <div id="volumeKnob" class="slider-knob" aria-label="Volume slider"></div>
+          </div>
+          <div id="volumeValue" class="micro">75%</div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">Hit input</div>
+          <button id="bindingButton" class="binding" type="button">SPACE</button>
+          <div class="micro">F / J</div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">Song</div>
+          <div id="songViewport" class="song-viewport">
+            <div id="songStrip" class="song-strip">
+              <div class="song-card selected"><div>NEON CIRCUIT</div><div class="micro">128 BPM · 30 SEC</div></div>
+              <div class="song-card"><div>VOID SIGNAL</div><div class="micro">LOCKED · DRAG</div></div>
+              <div class="song-card"><div>CHROMA RUSH</div><div class="micro">LOCKED · DRAG</div></div>
+            </div>
+          </div>
+          <div class="micro">01</div>
+        </div>
+        <div class="back-top">↑ Scroll up · press your key to launch</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="screen" aria-label="Rhythm game">
+    <div id="gameShell" class="game-shell">
+      <div id="grid" class="grid"></div>
+      <div id="ambient" class="ambient"></div>
+      <svg class="scene-svg" viewBox="0 0 1000 562" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <path id="frameDiamond" d="M500 80 L840 281 L500 482 L160 281Z"/>
+          <path id="frameHex" d="M285 86 L715 86 L875 281 L715 476 L285 476 L125 281Z"/>
+          <path id="shapeCircle" d="M16 2 A14 14 0 1 1 15.99 2Z"/>
+          <path id="shapeSquare" d="M3 3 L29 3 L29 29 L3 29Z"/>
+          <path id="shapeTriangle" d="M16 2 L30 29 L2 29Z"/>
+        </defs>
+        <path id="sceneFrame" d="M500 80 L840 281 L500 482 L160 281Z"/>
+      </svg>
+      <svg id="flightSvg" class="flight-svg" viewBox="0 0 1000 562" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="hud">
+        <div class="hud-block">
+          <span class="hud-label">Score</span><span id="scoreValue" class="hud-value">000000</span>
+        </div>
+        <div id="comboWrap" class="combo-wrap">
+          <div class="hud-label">Chain</div><div id="comboValue" class="hud-value">0</div><div id="multiplier">×1 SIGNAL</div>
+        </div>
+        <div class="hud-block right">
+          <span class="hud-label">Progress</span>
+          <div class="progress-wrap">
+            <span id="accuracyValue" class="micro">100.0%</span>
+            <svg class="progress-svg" viewBox="0 0 44 44">
+              <circle id="progressTrack" cx="22" cy="22" r="18"/>
+              <circle id="progressPath" cx="22" cy="22" r="18"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div id="stage" class="stage">
+        <div class="target-wrap"><div class="target-cross"></div><div id="targetRing" class="target-ring"></div><div id="targetCore" class="target-core"></div></div>
+        <div id="particles" class="particles"></div>
+        <div class="feedback"><div id="judgeLabel"></div><div id="timingLabel"></div></div>
+      </div>
+      <div id="hitFlash" class="flash"></div>
+      <div id="missFlash" class="miss-flash"></div>
+      <div id="milestoneBar" class="milestone-bar"></div>
+      <div id="blackFrame" class="black-frame"></div>
+      <div class="pause-tag">SPACE / F / J / TAP · HIT THE CORE</div>
+    </div>
+  </section>
+
+  <section id="resultsScreen" class="screen" aria-label="Results">
+    <div class="result-page">
+      <div class="result-main">
+        <div class="kicker result-item">Transmission complete</div>
+        <div id="rankValue" class="rank result-item">S</div>
+        <div id="finalScore" class="final-score result-item">000000</div>
+        <div id="resultCombo" class="result-combo">COMBO ×0</div>
+        <div class="retry result-item">PRESS <span id="retryKey">SPACE</span> TO RETRY · SCROLL FOR DETAILS</div>
+      </div>
+    </div>
+    <div class="result-page stats-page">
+      <div id="statsPanel" class="stats-panel">
+        <div class="kicker">Timing analysis</div>
+        <h2>BREAKDOWN</h2>
+        <div class="stat-row perfect-color"><span class="stat-name">Perfect</span><div class="stat-track"><div id="perfectBar" class="stat-fill"></div></div><span id="perfectCount" class="stat-count">0</span></div>
+        <div class="stat-row good-color"><span class="stat-name">Good</span><div class="stat-track"><div id="goodBar" class="stat-fill"></div></div><span id="goodCount" class="stat-count">0</span></div>
+        <div class="stat-row ok-color"><span class="stat-name">OK</span><div class="stat-track"><div id="okBar" class="stat-fill"></div></div><span id="okCount" class="stat-count">0</span></div>
+        <div class="stat-row miss-color"><span class="stat-name">Miss</span><div class="stat-track"><div id="missBar" class="stat-fill"></div></div><span id="missCount" class="stat-count">0</span></div>
+        <div id="resultAccuracy" class="accuracy">100.0%</div>
+      </div>
+    </div>
+  </section>
+  <div class="scanlines"></div><div class="noise"></div>
+</main>
+
+<script type="module">
+import {
+  animate, createTimeline, stagger, createSpring as spring, svg, createDraggable, onScroll, waapi, utils
+} from 'https://cdn.jsdelivr.net/npm/animejs@4.0.0/lib/anime.esm.js';
+
+// anime.js 4.0.0 predates the text package; this preserves its later splitText API shape.
+function splitText(target, options = { chars: true }) {
+  const el = typeof target === 'string' ? document.querySelector(target) : target;
+  const original = el.textContent;
+  const chars = [];
+  el.setAttribute('aria-label', original);
+  el.textContent = '';
+  [...original].forEach(letter => {
+    const span = document.createElement('span');
+    span.className = options.chars?.class || 'char';
+    span.setAttribute('aria-hidden', 'true');
+    span.innerHTML = letter === ' ' ? '&nbsp;' : letter;
+    el.appendChild(span);
+    chars.push(span);
+  });
+  return { chars, revert: () => { el.textContent = original; } };
+}
+
+const $ = selector => document.querySelector(selector);
+const $$ = selector => [...document.querySelectorAll(selector)];
+const app = $('#app');
+const titleScreen = $('#titleScreen');
+const gameScreen = $('#gameScreen');
+const resultsScreen = $('#resultsScreen');
+const gameShell = $('#gameShell');
+const stage = $('#stage');
+const flightSvg = $('#flightSvg');
+const particlesLayer = $('#particles');
+const COLORS = ['#ff3366', '#33ffcc', '#ffcc33', '#8a5cff'];
+const BPM = 128;
+const STEP = 60 / BPM / 4;
+const TRAVEL = 1.65;
+const TOTAL_STEPS = 256;
+const SONG_DURATION = TOTAL_STEPS * STEP;
+const NOTE_STEPS = Array.from({ length: TOTAL_STEPS }, (_, i) => i)
+  .filter(i => i >= 16 && (i % 4 === 0 || (i % 16 === 14) || (i > 128 && i % 8 === 6)));
+
+let state = 'TITLE';
+let audioCtx;
+let masterGain;
+let volume = .75;
+let hitKey = 'Space';
+let waitingForBinding = false;
+let songStart = 0;
+let scheduler;
+let frameRequest;
+let nextAudioStep = 0;
+let notes = [];
+let score = 0;
+let combo = 0;
+let maxCombo = 0;
+let judged = 0;
+let stats = { perfect: 0, good: 0, ok: 0, miss: 0 };
+let progressAnimation;
+let idleBreath;
+let section = -1;
+let gameToken = 0;
+let titleReady = false;
+
+function switchScreen(next) {
+  [titleScreen, gameScreen, resultsScreen].forEach(screen => screen.classList.remove('active'));
+  next.classList.add('active');
+}
+
+function buildGridAndAmbient() {
+  const grid = $('#grid');
+  for (let i = 0; i < 15; i++) {
+    const v = document.createElement('i');
+    v.className = 'grid-line v'; v.style.left = `${i * 100 / 14}%`; grid.appendChild(v);
+  }
+  for (let i = 0; i < 9; i++) {
+    const h = document.createElement('i');
+    h.className = 'grid-line h'; h.style.top = `${i * 100 / 8}%`; grid.appendChild(h);
+  }
+  const ambient = $('#ambient');
+  for (let i = 0; i < 32; i++) {
+    const dot = document.createElement('i');
+    dot.className = 'ambient-dot';
+    dot.style.left = `${(i * 37) % 100}%`; dot.style.top = `${(i * 61) % 100}%`;
+    ambient.appendChild(dot);
+    waapi.animate(dot, {
+      translateY: ['8px', '-16px', '3px', '0px'],
+      translateX: ['0px', `${(i % 3 - 1) * 12}px`, '0px'],
+      scale: [.7, 1.25, .94, 1],
+      opacity: [.08, .4, .2, .08],
+      duration: 3500 + (i % 7) * 430,
+      delay: i * 90,
+      loop: true,
+      ease: 'inOut(3)'
+    });
+  }
+}
+
+function setupTitle() {
+  const startSplit = splitText($('#startText'), { chars: { class: 'char' } });
+  const intro = createTimeline({
+    defaults: { duration: 700, ease: 'outElastic(1, .55)' },
+    onComplete: () => { titleReady = true; }
+  });
+  intro
+    .add('.intro-item', { opacity: [0, 1], translateY: [35, -5, 0], scale: [.94, 1.035, 1], delay: stagger(75) })
+    .add('#logoPath', { d: svg.morphTo('#logoMorph'), strokeWidth: [1, 6, 4] }, '<-=500')
+    .add(startSplit.chars, { opacity: [0, 1], translateY: [15, -4, 0], rotate: [-10, 3, 0], delay: stagger(28), ease: spring({ stiffness: 190, damping: 12 }) }, '<-=500')
+    .add('.scroll-cue', { translateY: [0, 8, -2, 0], duration: 800 }, '<-=250');
+
+  const orbitOne = svg.createMotionPath('#orbitOne');
+  const orbitTwo = svg.createMotionPath('#orbitTwo');
+  animate('#orbiterOne', { ...orbitOne, duration: 9000, loop: true, ease: 'linear' });
+  animate('#orbiterTwo', { ...orbitTwo, duration: 7200, loop: true, ease: 'linear', reversed: true });
+
+  animate('#startButton', {
+    scale: [.98, 1.045, .995, 1],
+    boxShadow: ['0 0 0 rgba(102,51,255,0)', '0 0 34px rgba(102,51,255,.35)', '0 0 18px rgba(102,51,255,.15)'],
+    duration: 1600, loop: true, ease: 'outElastic(1, .55)'
+  });
+
+  animate('#settingsPanel', {
+    opacity: [0, 1], translateY: [90, -12, 0], scale: [.94, 1.025, 1],
+    autoplay: onScroll({ target: '#settingsPanel', container: titleScreen, enter: 'bottom-=10% top+=70%' }),
+    duration: 900, ease: spring({ stiffness: 160, damping: 13 })
+  });
+}
+
+function setupDraggables() {
+  createDraggable('#volumeKnob', {
+    container: '#volumeTrack',
+    y: false,
+    x: { snap: 1 },
+    releaseEase: spring({ stiffness: 220, damping: 16 }),
+    onGrab: self => animate(self.$target, { scale: [.9, 1.3, 1.15], rotate: [45, 52, 45], duration: 280, ease: 'outElastic(1,.5)' }),
+    onUpdate: self => {
+      const track = $('#volumeTrack').getBoundingClientRect();
+      volume = Math.max(0, Math.min(1, (self.x + 9) / track.width));
+      $('#volumeFill').style.width = `${volume * 100}%`;
+      $('#volumeValue').textContent = `${Math.round(volume * 100)}%`;
+      if (masterGain && audioCtx) masterGain.gain.setTargetAtTime(volume * .32, audioCtx.currentTime, .02);
+    },
+    onRelease: self => animate(self.$target, { scale: [.9, 1.18, 1], rotate: [45, 38, 45], duration: 380, ease: 'outElastic(1,.45)' })
+  });
+  createDraggable('#songStrip', {
+    container: '#songViewport',
+    y: false,
+    x: { snap: 232 },
+    releaseEase: spring({ stiffness: 140, damping: 14 }),
+    onGrab: self => animate(self.$target, { scale: [.99, 1.015, 1], duration: 260, ease: 'outElastic(1,.5)' }),
+    onRelease: self => animate(self.$target, { scale: [.985, 1.01, 1], duration: 380, ease: 'outElastic(1,.5)' })
+  });
+}
+
+async function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = volume * .32;
+    masterGain.connect(audioCtx.destination);
+  }
+  await audioCtx.resume();
+}
+
+function kick(time, accent = false) {
+  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(accent ? 150 : 120, time);
+  osc.frequency.exponentialRampToValueAtTime(42, time + .13);
+  gain.gain.setValueAtTime(accent ? 1 : .7, time);
+  gain.gain.exponentialRampToValueAtTime(.001, time + .22);
+  osc.connect(gain).connect(masterGain); osc.start(time); osc.stop(time + .23);
+}
+function snare(time) {
+  const length = Math.floor(audioCtx.sampleRate * .12);
+  const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+  const noise = audioCtx.createBufferSource(), filter = audioCtx.createBiquadFilter(), gain = audioCtx.createGain();
+  noise.buffer = buffer; filter.type = 'highpass'; filter.frequency.value = 1100;
+  gain.gain.setValueAtTime(.42, time); gain.gain.exponentialRampToValueAtTime(.001, time + .12);
+  noise.connect(filter).connect(gain).connect(masterGain); noise.start(time);
+}
+function hat(time, open = false) {
+  const length = Math.floor(audioCtx.sampleRate * (open ? .09 : .035));
+  const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+  const noise = audioCtx.createBufferSource(), filter = audioCtx.createBiquadFilter(), gain = audioCtx.createGain();
+  noise.buffer = buffer; filter.type = 'highpass'; filter.frequency.value = 7000;
+  gain.gain.setValueAtTime(open ? .11 : .07, time); gain.gain.exponentialRampToValueAtTime(.001, time + (open ? .09 : .035));
+  noise.connect(filter).connect(gain).connect(masterGain); noise.start(time);
+}
+function bass(time, index) {
+  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+  const tones = [55, 55, 65.41, 49];
+  osc.type = 'triangle'; osc.frequency.value = tones[Math.floor(index / 16) % tones.length];
+  gain.gain.setValueAtTime(.18, time); gain.gain.exponentialRampToValueAtTime(.001, time + .18);
+  osc.connect(gain).connect(masterGain); osc.start(time); osc.stop(time + .2);
+}
+function scheduleAudioStep(index, time) {
+  const inBar = index % 16;
+  if ([0,4,8,12].includes(inBar)) { kick(time, inBar === 0 || inBar === 8); bass(time, index); }
+  if ([2,6,10,14].includes(inBar)) snare(time);
+  if (index % 2 === 0) hat(time, index % 8 === 6);
+  const delay = Math.max(0, (time - audioCtx.currentTime) * 1000);
+  setTimeout(() => onBeat(index), delay);
+}
+function runScheduler(token) {
+  clearInterval(scheduler);
+  scheduler = setInterval(() => {
+    if (state !== 'PLAYING' || token !== gameToken) return;
+    while (nextAudioStep < TOTAL_STEPS && songStart + nextAudioStep * STEP < audioCtx.currentTime + .12) {
+      scheduleAudioStep(nextAudioStep, songStart + nextAudioStep * STEP);
+      nextAudioStep++;
+    }
+  }, 25);
+}
+
+function onBeat(index) {
+  if (state !== 'PLAYING') return;
+  const strong = index % 16 === 0;
+  waapi.animate('.grid-line', {
+    scale: [0.992, strong ? 1.035 : 1.02, .997, 1],
+    opacity: [.45, strong ? 1 : .7, .55],
+    duration: STEP * 1000 * 1.8,
+    delay: stagger(5, { from: 'center' }),
+    ease: 'out(4)'
+  });
+  animate('#targetCore', {
+    scale: [.96, strong ? 1.22 : 1.1, .985, 1],
+    rotate: [45, strong ? 55 : 49, 43, 45],
+    duration: 420, ease: 'outElastic(1,.6)'
+  });
+  if (strong) {
+    const newSection = Math.floor(index / 64);
+    if (newSection !== section) sectionTransition(newSection);
+  }
+}
+
+function sectionTransition(nextSection) {
+  section = nextSection;
+  document.documentElement.style.setProperty('--accent-4', COLORS[(nextSection + 3) % COLORS.length]);
+  const frameTarget = nextSection % 2 ? '#frameHex' : '#frameDiamond';
+  createTimeline()
+    .add('#blackFrame', { opacity: [0, 1], duration: 65, ease: 'inQuad' })
+    .add('#blackFrame', { opacity: [1, 0], duration: 170, ease: 'outElastic(1,.7)' }, '+=16')
+    .add('#sceneFrame', { d: svg.morphTo(frameTarget), strokeWidth: [1.2, 3.2, 1.2], scale: [.97, 1.035, 1], duration: 850, ease: spring({ stiffness: 130, damping: 14 }) }, '<-=90');
+}
+
+function noteEdge(index) {
+  const side = (index * 7 + Math.floor(index / 8)) % 4;
+  const p = 90 + ((index * 83) % 382);
+  if (side === 0) return { x: p * 2, y: -35 };
+  if (side === 1) return { x: 1035, y: p };
+  if (side === 2) return { x: p * 2, y: 597 };
+  return { x: -35, y: p };
+}
+function makeCurve(start, index, suffix = '') {
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.id = `flight-${index}-${suffix}-${Math.random().toString(36).slice(2)}`;
+  const bend = ((index % 5) - 2) * 44;
+  const cx = (start.x + 500) / 2 + (start.y > 281 ? bend : -bend);
+  const cy = (start.y + 281) / 2 + (start.x > 500 ? -bend : bend);
+  path.setAttribute('d', `M${start.x},${start.y} Q${cx},${cy} 500,281`);
+  path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'none');
+  flightSvg.appendChild(path);
+  return path;
+}
+function createNote(index, targetTime) {
+  if (state !== 'PLAYING') return;
+  const start = noteEdge(index);
+  const color = COLORS[(index / 4) % COLORS.length | 0];
+  const el = document.createElement('div');
+  el.className = 'note';
+  el.style.color = color;
+  el.innerHTML = `<svg viewBox="0 0 32 32"><path d="${$('#shapeCircle').getAttribute('d')}"/></svg>`;
+  stage.appendChild(el);
+  const path = makeCurve(start, index, 'main');
+  const shapePath = el.querySelector('path');
+  const comboShape = combo >= 30 ? '#shapeTriangle' : combo >= 15 ? '#shapeSquare' : '#shapeCircle';
+  if (comboShape !== '#shapeCircle') {
+    animate(shapePath, { d: svg.morphTo(comboShape), duration: 540, ease: 'outElastic(1,.55)' });
+  }
+  const item = { index, targetTime, el, path, judged: false, animation: null };
+  notes.push(item);
+  const motion = svg.createMotionPath(path);
+  item.animation = animate(el, {
+    ...motion,
+    scale: [.25, 1.18, .98, 1, 1.08],
+    opacity: [0, 1, 1, 1],
+    duration: TRAVEL * 1000,
+    ease: 'in(2.1)'
+  });
+  const echoes = [1,2].map(n => {
+    const echo = el.cloneNode(true);
+    echo.classList.add('echo'); stage.insertBefore(echo, el);
+    const echoPath = makeCurve(start, index, `echo${n}`);
+    const echoMotion = svg.createMotionPath(echoPath);
+    animate(echo, {
+      ...echoMotion, scale: [.1, 1.12, .92, 1], opacity: [0, .24, 0],
+      duration: TRAVEL * 1000, delay: stagger(34)(echo, n - 1, 2), ease: 'in(2)',
+      onComplete: () => { echo.remove(); echoPath.remove(); }
+    });
+    return echo;
+  });
+  item.echoes = echoes;
+}
+
+function multiplierFor(value) {
+  if (value >= 50) return 4;
+  if (value >= 30) return 3;
+  if (value >= 15) return 2;
+  return 1;
+}
+function updateHud() {
+  $('#scoreValue').textContent = String(score).padStart(6, '0');
+  $('#comboValue').textContent = combo;
+  $('#multiplier').textContent = `×${multiplierFor(combo)} SIGNAL`;
+  const weighted = stats.perfect * 300 + stats.good * 200 + stats.ok * 100;
+  const accuracy = judged ? weighted / (judged * 300) * 100 : 100;
+  $('#accuracyValue').textContent = `${accuracy.toFixed(1)}%`;
+  animate('#scoreValue', { scale: [.94, 1.2, .98, 1], translateY: [2, -4, 1, 0], duration: 410, ease: spring({ stiffness: 210, damping: 14 }) });
+  const digits = splitText($('#comboValue'), { chars: { class: 'char combo-digit' } }).chars;
+  animate(digits, { translateY: [6, -9, 2, 0], scale: [.86, 1.25, .97, 1], delay: stagger(22), duration: 440, ease: spring({ stiffness: 200, damping: 12 }) });
+}
+
+function handleInput(event) {
+  if (waitingForBinding && event?.type === 'keydown') {
+    event.preventDefault();
+    hitKey = event.code;
+    waitingForBinding = false;
+    const label = event.code === 'Space' ? 'SPACE' : event.key.toUpperCase();
+    $('#bindingButton').textContent = label; $('#keycapLabel').textContent = label; $('#retryKey').textContent = label;
+    animate('#bindingButton', { scale: [.9, 1.22, .96, 1], duration: 420, ease: 'outElastic(1,.45)' });
+    return;
+  }
+  if (event?.type === 'keydown' && ![hitKey, 'KeyF', 'KeyJ'].includes(event.code)) return;
+  if (event?.repeat) return;
+  if (state === 'TITLE') { startGame(); return; }
+  if (state === 'RESULTS') { startGame(); return; }
+  if (state !== 'PLAYING') return;
+  judgeHit();
+}
+
+function judgeHit() {
+  const now = audioCtx.currentTime;
+  const pending = notes.filter(n => !n.judged);
+  const closest = pending.reduce((best, note) => !best || Math.abs(note.targetTime - now) < Math.abs(best.targetTime - now) ? note : best, null);
+  animate('#targetRing', { scale: [1, .95], duration: 65, ease: 'inQuad' });
+  if (!closest || Math.abs(closest.targetTime - now) > .15) {
+    registerMiss(null, 'EMPTY');
+    return;
+  }
+  const delta = now - closest.targetTime;
+  const abs = Math.abs(delta);
+  const tier = abs <= .025 ? 'perfect' : abs <= .075 ? 'good' : 'ok';
+  closest.judged = true; closest.el.remove(); closest.path.remove();
+  combo++; maxCombo = Math.max(maxCombo, combo); judged++; stats[tier]++;
+  const base = tier === 'perfect' ? 300 : tier === 'good' ? 200 : 100;
+  score += base * multiplierFor(combo);
+  updateHud();
+  hitFeedback(tier, delta);
+  if (combo % 5 === 0) comboMilestone();
+}
+
+function registerMiss(note, reason = 'MISS') {
+  if (note && note.judged) return;
+  if (note) {
+    note.judged = true; note.el.remove(); note.path.remove();
+  }
+  combo = 0; judged++; stats.miss++; updateHud();
+  hitFeedback('miss', 0, reason);
+}
+
+function showSplitLabel(text, color) {
+  const label = $('#judgeLabel');
+  label.textContent = text; label.style.color = color; label.style.opacity = 1;
+  const { chars } = splitText(label, { chars: { class: 'char' } });
+  animate(chars, {
+    opacity: [0, 1, 1, 0],
+    translateY: [18, -9, 2, 0, -12],
+    scale: [.6, 1.35, .96, 1, .92],
+    rotate: () => utils.random(-9, 9),
+    delay: stagger(24, { from: 'center' }),
+    duration: 760, ease: 'outElastic(1,.48)'
+  });
+}
+
+function hitFeedback(tier, delta, reason) {
+  const isMiss = tier === 'miss';
+  const colors = { perfect:'#ffcc33', good:'#33ffcc', ok:'#8a5cff', miss:'#ff3366' };
+  const labels = { perfect:'PERFECT!', good:'GOOD', ok:'OK', miss:reason || 'MISS' };
+  showSplitLabel(labels[tier], colors[tier]);
+  $('#timingLabel').textContent = isMiss ? 'CHAIN LOST' : `${delta < 0 ? 'EARLY' : 'LATE'} ${Math.round(Math.abs(delta) * 1000)}ms`;
+  animate('#timingLabel', { opacity:[0,1,1,0], translateY:[8,-3,1,0], scale:[.9,1.08,1], duration:700, ease:'outElastic(1,.6)' });
+
+  if (isMiss) {
+    waapi.animate(app, { translateY:['0px','-5px','4px','-2px','1px','0px'], rotate:['0deg','-.18deg','.12deg','0deg'], duration:180, ease:'out(4)' });
+    animate('#missFlash', { opacity:[0,.65,.18,0], scale:[.99,1.01,1], duration:330, ease:'outElastic(1,.7)' });
+    animate('#targetRing', { scale:[.95,1.12,.88,1.04,1], borderColor:['#ff3366','#ff3366','#33ffcc'], duration:520, ease:'outElastic(1,.42)' });
+    return;
+  }
+
+  // Layer 1: anticipation, burst, elastic settle.
+  animate('#targetRing', { scale:[.95,1.32,.97,1.06,1], rotate:[0,8,-3,1,0], duration:560, ease:spring({ stiffness:220, damping:11 }) });
+  // Layer 2: radial flash.
+  animate('#hitFlash', { opacity:[0,.95,.25,0], scale:[.92,1.08,.99,1], duration:340, ease:'outElastic(1,.65)' });
+  // Layer 3: curved, staggered particles.
+  burstParticles(tier === 'perfect' ? 32 : tier === 'good' ? 22 : 16, colors[tier]);
+  // Layer 4: split score pop.
+  const pop = document.createElement('div'); pop.className = 'score-pop'; pop.textContent = `+${tier === 'perfect' ? 300 : tier === 'good' ? 200 : 100}`;
+  stage.appendChild(pop); const popChars = splitText(pop, { chars:{class:'char'} }).chars;
+  animate(popChars, { opacity:[0,1,1,0], translateY:[12,-22,-15,-55], scale:[.7,1.28,.96,1], delay:stagger(18), duration:720, ease:spring({stiffness:170,damping:13}), onComplete:()=>pop.remove() });
+  // Layer 6: WAAPI screen shake.
+  const amplitude = tier === 'perfect' ? 3 : 1.5;
+  waapi.animate(app, { translateX:['0px',`${amplitude}px`,`${-amplitude*.8}px`,`${amplitude*.35}px`,'0px'], translateY:['0px','-2px','1px','0px'], scale:[1,.997,1.002,1], duration:130, ease:'out(5)' });
+  // Layer 7: overlapping camera pulse.
+  animate(gameShell, { scale:[1,.995,1.025,.998,1], rotate:[0,-.12,.08,0], duration:STEP*2000, delay:95, ease:'outElastic(1,.72)' });
+}
+
+function burstParticles(count, color) {
+  const particleDelay = stagger(9, { from: 'center' });
+  for (let i = 0; i < count; i++) {
+    const angle = i / count * Math.PI * 2 + (i % 3) * .07;
+    const distance = 65 + (i % 7) * 12;
+    const endX = 500 + Math.cos(angle) * distance;
+    const endY = 281 + Math.sin(angle) * distance;
+    const overshootX = 500 + Math.cos(angle) * distance * 1.12;
+    const overshootY = 281 + Math.sin(angle) * distance * 1.12;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M500,281 Q${500 + Math.cos(angle+.45)*distance*.62},${281 + Math.sin(angle+.45)*distance*.62} ${overshootX},${overshootY} Q${endX + Math.cos(angle)*5},${endY + Math.sin(angle)*5} ${endX},${endY}`);
+    path.setAttribute('stroke','none'); path.setAttribute('fill','none'); flightSvg.appendChild(path);
+    const p = document.createElement('i'); p.className = `particle ${i%3===0?'circle':i%3===1?'diamond':''}`; p.style.color = i%5===0 ? '#fff' : color; particlesLayer.appendChild(p);
+    animate(p, {
+      ...svg.createMotionPath(path),
+      scale:[0,1.45,.82,1,0],
+      opacity:[0,1,1,.7,0],
+      rotate:[0,180+(i%4)*45,350,360],
+      delay:particleDelay(p,i,count),
+      duration:650+(i%5)*45,
+      ease:'outElastic(1,.65)',
+      onComplete:()=>{ p.remove(); path.remove(); }
+    });
+  }
+}
+
+function comboMilestone() {
+  const allHud = $$('.hud-block, .combo-wrap');
+  const celebration = createTimeline({ defaults:{ ease:'outElastic(1,.5)' } });
+  celebration
+    .add(allHud, { scale:[1,.98], duration:100, delay:stagger(12) })
+    .add('#milestoneBar', { opacity:[0,1,.25,0], translateY:['0vh','110vh','98vh','105vh'], scaleY:[.7,1.35,.95,1], duration:650 }, '<')
+    .add('#comboValue', { scale:[.82,1.55,.9,1.12,1], rotate:[0,-6,3,0], duration:650 }, '<+=60')
+    .add('#multiplier', { scale:[.85,1.35,.94,1], rotate:[0,12,-6,0], duration:600 }, '<+=40');
+  waapi.animate(app, { translateX:['0px','5px','-4px','3px','-1px','0px'], translateY:['0px','-3px','2px','0px'], scale:[1,.996,1.003,1], duration:160, ease:'out(5)' });
+}
+
+function setupProgress() {
+  const [drawable] = svg.createDrawable('#progressPath');
+  progressAnimation = animate(drawable, {
+    draw: ['0 0','0 1','0 1'],
+    scale:[.98,1.015,1],
+    duration: SONG_DURATION * 1000,
+    ease:'linear'
+  });
+}
+
+async function startGame() {
+  if (state === 'TRANSITION') return;
+  state = 'TRANSITION';
+  await initAudio();
+  gameToken++;
+  const token = gameToken;
+  clearInterval(scheduler); cancelAnimationFrame(frameRequest);
+  notes.forEach(n => { n.el?.remove(); n.path?.remove(); }); notes = [];
+  flightSvg.innerHTML = '';
+  score=0; combo=0; maxCombo=0; judged=0; stats={perfect:0,good:0,ok:0,miss:0}; section=-1; nextAudioStep=0;
+  updateHud();
+  const exit = createTimeline({ defaults:{ease:'outElastic(1,.55)'} });
+  exit
+    .add('.title-stack', { scale:[1,.96,1.08], opacity:[1,1,0], rotate:[0,-1,1], duration:520 })
+    .add('#titleScreen', { opacity:[1,0], duration:160 }, '<+=250')
+    .call(() => {
+      titleScreen.scrollTop=0; resultsScreen.scrollTop=0; switchScreen(gameScreen);
+      animate(gameShell, { opacity:[0,1], scale:[.92,1.035,1], rotate:[-1,.4,0], duration:700, ease:spring({stiffness:150,damping:13}) });
+    })
+    .add('#targetRing', { scale:[0,1.28,.94,1], rotate:[-45,8,0], duration:700, ease:'outElastic(1, 0.5)' }, '<+=40')
+    .add('.hud > *', { opacity:[0,1], translateY:[-22,5,0], scale:[.94,1.04,1], delay:stagger(70), duration:550 }, '<')
+    .call(() => {
+      state='PLAYING';
+      songStart=audioCtx.currentTime+.14;
+      setupProgress(); runScheduler(token); gameLoop(token);
+      NOTE_STEPS.forEach((stepIndex, i) => {
+        const targetTime=songStart+stepIndex*STEP;
+        const timeout=Math.max(0,(targetTime-TRAVEL-audioCtx.currentTime)*1000);
+        setTimeout(()=>{ if(state==='PLAYING'&&token===gameToken) createNote(i,targetTime); },timeout);
+      });
+    });
+}
+
+function gameLoop(token) {
+  if (state !== 'PLAYING' || token !== gameToken) return;
+  const now = audioCtx.currentTime;
+  notes.forEach(note => {
+    if (!note.judged && now > note.targetTime + .15) registerMiss(note);
+  });
+  if (now >= songStart + SONG_DURATION + .45) finishGame();
+  else frameRequest=requestAnimationFrame(()=>gameLoop(token));
+}
+
+function finishGame() {
+  if (state !== 'PLAYING') return;
+  state='TRANSITION'; clearInterval(scheduler); cancelAnimationFrame(frameRequest);
+  notes.filter(n=>!n.judged).forEach(n=>registerMiss(n));
+  const collapse=createTimeline({defaults:{ease:'outElastic(1,.6)'}});
+  collapse
+    .add('.hud > *', { scale:[1,.97,1.08,0], opacity:[1,1,0], translateY:[0,4,-50], delay:stagger(60), duration:650 })
+    .add('#targetRing', { scale:[1,.9,1.35,0], rotate:[0,20,-12,90], opacity:[1,1,0], duration:700 }, '<+=80')
+    .add('#sceneFrame', { scale:[1,.95,1.12,0], opacity:[1,1,0], duration:650 }, '<')
+    .add('#blackFrame',{opacity:[0,1],duration:250},'<+=300')
+    .call(showResults);
+}
+
+function showResults() {
+  switchScreen(resultsScreen);
+  $('#blackFrame').style.opacity=0;
+  const weighted=stats.perfect*300+stats.good*200+stats.ok*100;
+  const accuracy=judged?weighted/(judged*300)*100:0;
+  const rank=accuracy>95?'S':accuracy>85?'A':accuracy>70?'B':accuracy>50?'C':'D';
+  $('#rankValue').textContent=rank; $('#finalScore').textContent=String(score).padStart(6,'0');
+  $('#resultCombo').textContent=`COMBO ×${maxCombo}`;
+  $('#resultAccuracy').textContent=`${accuracy.toFixed(1)}%`;
+  ['perfect','good','ok','miss'].forEach(key=>{
+    $(`#${key}Count`).textContent=stats[key];
+    $(`#${key}Bar`).dataset.width=`${judged?stats[key]/judged*100:0}%`;
+  });
+  const comboSplit=splitText($('#resultCombo'),{chars:{class:'char'}});
+  const reveal=createTimeline({defaults:{ease:'outElastic(1,.5)'}});
+  reveal
+    .add('.result-item',{opacity:[0,1],translateY:[50,-9,0],scale:[.86,1.08,1],delay:stagger(90),duration:700})
+    .add(comboSplit.chars,{opacity:[0,1],translateY:[20,-7,0],scale:[.6,1.3,1],delay:stagger(35,{from:'center'}),duration:520},'<-=400');
+  state='RESULTS';
+}
+
+function setupResultsScroll() {
+  animate('#statsPanel',{
+    opacity:[0,1],translateY:[80,-13,0],scale:[.93,1.025,1],
+    duration:800,ease:spring({stiffness:150,damping:13}),
+    autoplay:onScroll({
+      target:'#statsPanel',container:resultsScreen,
+      enter:'bottom-=10% top+=75%',
+      onEnter:()=>{
+        $$('.stat-fill').forEach((bar,i)=>animate(bar,{width:['0%',bar.dataset.width||'0%'],scaleY:[.7,1.35,1],delay:stagger(90)(bar,i,4),duration:800,ease:'outElastic(1,.55)'}));
+      }
+    })
+  });
+}
+
+$('#startButton').addEventListener('click',()=>startGame());
+$('#bindingButton').addEventListener('click',()=>{
+  waitingForBinding=true; $('#bindingButton').textContent='PRESS…';
+  animate('#bindingButton',{scale:[1,.92,1.12,1],duration:420,ease:'outElastic(1,.5)'});
+});
+window.addEventListener('keydown',event=>handleInput(event));
+gameScreen.addEventListener('pointerdown',event=>{ if(event.pointerType!=='mouse') handleInput(event); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&state==='PLAYING'){ masterGain?.gain.setTargetAtTime(0,audioCtx.currentTime,.02); } else if(masterGain&&audioCtx){ masterGain.gain.setTargetAtTime(volume*.32,audioCtx.currentTime,.04); } });
+
+buildGridAndAmbient();
+setupTitle();
+setupDraggables();
+setupResultsScroll();
+idleBreath=animate('#targetRing',{scale:[.97,1.035,.99,1],rotate:[0,2,-1,0],duration:1700,loop:true,ease:spring({stiffness:90,damping:11})});
+</script>
+</body>
+</html>
