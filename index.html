@@ -220,6 +220,20 @@
     .target-ring { inset:0; border:2px solid var(--accent-2); box-shadow:0 0 18px var(--glow-2), inset 0 0 18px var(--glow-2); }
     .target-ring::before { content:""; inset:11px; border:1px dashed rgba(255,255,255,.32); }
     .target-core { width:44px; height:44px; border:3px solid var(--accent-1); background:rgba(255,51,102,.08); box-shadow:0 0 25px var(--glow-1); transform:rotate(45deg); }
+    .hit-ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 100px;
+      height: 100px;
+      margin: -50px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9;
+      box-shadow: 0 0 8px currentColor;
+    }
     .target-cross::before, .target-cross::after { content:""; position:absolute; left:50%; top:50%; background:rgba(255,255,255,.22); transform:translate(-50%,-50%); }
     .target-cross::before { width:220px; height:1px; }
     .target-cross::after { height:220px; width:1px; }
@@ -291,9 +305,7 @@
     .score-pop { position:absolute; z-index:32; left:50%; top:58%; white-space:nowrap; font-size:15px; color:var(--accent-3); pointer-events:none; }
     .char { display:inline-block; transform-origin:50% 100%; }
     .particles { position:absolute; inset:0; z-index:25; pointer-events:none; }
-    .particle { position:absolute; left:0; top:0; width:7px; height:7px; margin:-3px; background:currentColor; box-shadow:0 0 9px currentColor; }
-    .particle.circle { border-radius:50%; }
-    .particle.diamond { transform:rotate(45deg); }
+    .particle { position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px; border-radius:50%; background:currentColor; box-shadow:0 0 7px currentColor; }
     .pause-tag { position:absolute; left:24px; bottom:22px; z-index:22; color:var(--text-dim); font-size:9px; }
 
     /* RESULTS */
@@ -439,7 +451,7 @@
         </div>
       </div>
       <div id="stage" class="stage">
-        <div class="target-wrap"><div class="target-cross"></div><div id="targetRing" class="target-ring"></div><div id="targetCore" class="target-core"></div></div>
+        <div class="target-wrap"><div class="target-cross"></div><div id="hitRing" class="hit-ring"></div><div id="targetRing" class="target-ring"></div><div id="targetCore" class="target-core"></div></div>
         <div id="particles" class="particles"></div>
         <div class="feedback"><div id="judgeLabel"></div><div id="timingLabel"></div></div>
       </div>
@@ -918,52 +930,51 @@ function hitFeedback(tier, delta, reason) {
   animate('#timingLabel', { opacity:[0,1,1,0], translateY:[8,-3,1,0], scale:[.9,1.08,1], duration:700, ease:'outElastic(1,.6)' });
 
   if (isMiss) {
-    waapi.animate(app, { translateY:['0px','-5px','4px','-2px','1px','0px'], rotate:['0deg','-.18deg','.12deg','0deg'], duration:180, ease:'out(4)' });
     animate('#missFlash', { opacity:[0,.65,.18,0], scale:[.99,1.01,1], duration:330, ease:'outElastic(1,.7)' });
     animate('#targetRing', { scale:[.95,1.12,.88,1.04,1], borderColor:['#ff3366','#ff3366','#33ffcc'], duration:520, ease:'outElastic(1,.42)' });
     return;
   }
 
-  // Layer 1: anticipation, burst, elastic settle.
   animate('#targetRing', { scale:[.95,1.32,.97,1.06,1], rotate:[0,8,-3,1,0], duration:560, ease:spring({ stiffness:220, damping:11 }) });
-  // Layer 2: radial flash.
-  animate('#hitFlash', { opacity:[0,.95,.25,0], scale:[.92,1.08,.99,1], duration:340, ease:'outElastic(1,.65)' });
-  // Layer 3: curved, staggered particles.
-  burstParticles(tier === 'perfect' ? 32 : tier === 'good' ? 22 : 16, colors[tier]);
-  // Layer 4: split score pop.
+  animate('#hitRing', {
+    color: colors[tier],
+    opacity:[0,.85,.35,0],
+    scale:[0,1.5],
+    duration:360,
+    ease:'outQuad'
+  });
+  burstParticles(tier === 'perfect' ? 8 : tier === 'good' ? 6 : 4, colors[tier]);
   const awarded = (tier === 'perfect' ? 300 : tier === 'good' ? 200 : 100) * multiplierFor(combo);
   const pop = document.createElement('div'); pop.className = 'score-pop'; pop.textContent = `+${awarded}`;
-  stage.appendChild(pop); const popChars = splitText(pop, { chars:{class:'char'} }).chars;
-  animate(popChars, { opacity:[0,1,1,0], translateY:[12,-22,-15,-55], scale:[.7,1.28,.96,1], delay:stagger(18), duration:720, ease:spring({stiffness:170,damping:13}), onComplete:()=>pop.remove() });
-  // Layer 6: WAAPI screen shake.
-  const amplitude = tier === 'perfect' ? 3 : 1.5;
-  waapi.animate(app, { translateX:['0px',`${amplitude}px`,`${-amplitude*.8}px`,`${amplitude*.35}px`,'0px'], translateY:['0px','-2px','1px','0px'], scale:[1,.997,1.002,1], duration:130, ease:'out(5)' });
-  // Layer 7: overlapping camera pulse.
-  animate(gameShell, { scale:[1,.995,1.025,.998,1], rotate:[0,-.12,.08,0], duration:stepDuration()*2000, delay:95, ease:'outElastic(1,.72)' });
+  stage.appendChild(pop);
+  animate(pop, {
+    opacity:[0,1,1,0],
+    translateY:[12,-22,-15,-55],
+    scale:[.7,1.28,.96,1],
+    duration:720,
+    ease:spring({stiffness:170,damping:13}),
+    onComplete:()=>pop.remove()
+  });
 }
 
 function burstParticles(count, color) {
   const particleDelay = stagger(9, { from: 'center' });
   for (let i = 0; i < count; i++) {
     const angle = i / count * Math.PI * 2 + (i % 3) * .07;
-    const distance = 65 + (i % 7) * 12;
-    const endX = 500 + Math.cos(angle) * distance;
-    const endY = 281 + Math.sin(angle) * distance;
-    const overshootX = 500 + Math.cos(angle) * distance * 1.12;
-    const overshootY = 281 + Math.sin(angle) * distance * 1.12;
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d', `M500,281 Q${500 + Math.cos(angle+.45)*distance*.62},${281 + Math.sin(angle+.45)*distance*.62} ${overshootX},${overshootY} Q${endX + Math.cos(angle)*5},${endY + Math.sin(angle)*5} ${endX},${endY}`);
-    path.setAttribute('stroke','none'); path.setAttribute('fill','none'); flightSvg.appendChild(path);
-    const p = document.createElement('i'); p.className = `particle ${i%3===0?'circle':i%3===1?'diamond':''}`; p.style.color = i%5===0 ? '#fff' : color; particlesLayer.appendChild(p);
+    const distance = 54 + (i % 4) * 14;
+    const p = document.createElement('i');
+    p.className = 'particle';
+    p.style.color = color;
+    particlesLayer.appendChild(p);
     animate(p, {
-      ...svg.createMotionPath(path),
-      scale:[0,1.45,.82,1,0],
-      opacity:[0,1,1,.7,0],
-      rotate:[0,180+(i%4)*45,350,360],
+      translateX:[0, Math.cos(angle) * distance],
+      translateY:[0, Math.sin(angle) * distance],
+      scale:[0,1.25,.8,0],
+      opacity:[0,.9,.65,0],
       delay:particleDelay(p,i,count),
-      duration:650+(i%5)*45,
-      ease:'outElastic(1,.65)',
-      onComplete:()=>{ p.remove(); path.remove(); }
+      duration:420+(i%3)*35,
+      ease:'outQuad',
+      onComplete:()=>p.remove()
     });
   }
 }
