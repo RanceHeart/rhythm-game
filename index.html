@@ -220,20 +220,6 @@
     .target-ring { inset:0; border:2px solid var(--accent-2); box-shadow:0 0 18px var(--glow-2), inset 0 0 18px var(--glow-2); }
     .target-ring::before { content:""; inset:11px; border:1px dashed rgba(255,255,255,.32); }
     .target-core { width:44px; height:44px; border:3px solid var(--accent-1); background:rgba(255,51,102,.08); box-shadow:0 0 25px var(--glow-1); transform:rotate(45deg); }
-    .hit-ring {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 100px;
-      height: 100px;
-      margin: -50px;
-      border-radius: 50%;
-      border: 1.5px solid currentColor;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 9;
-      box-shadow: 0 0 8px currentColor;
-    }
     .target-cross::before, .target-cross::after { content:""; position:absolute; left:50%; top:50%; background:rgba(255,255,255,.22); transform:translate(-50%,-50%); }
     .target-cross::before { width:220px; height:1px; }
     .target-cross::after { height:220px; width:1px; }
@@ -451,7 +437,7 @@
         </div>
       </div>
       <div id="stage" class="stage">
-        <div class="target-wrap"><div class="target-cross"></div><div id="hitRing" class="hit-ring"></div><div id="targetRing" class="target-ring"></div><div id="targetCore" class="target-core"></div></div>
+        <div class="target-wrap"><div class="target-cross"></div><div id="targetRing" class="target-ring"></div><div id="targetCore" class="target-core"></div></div>
         <div id="particles" class="particles"></div>
         <div class="feedback"><div id="judgeLabel"></div><div id="timingLabel"></div></div>
       </div>
@@ -574,6 +560,7 @@ let idleBreath;
 let section = -1;
 let gameToken = 0;
 let titleReady = false;
+let audioCtx;
 
 function switchScreen(next) {
   [titleScreen, gameScreen, resultsScreen].forEach(screen => screen.classList.remove('active'));
@@ -715,7 +702,40 @@ function applyVolume() {
   musicPlayer.volume = Math.max(0, Math.min(1, volume));
 }
 
+function ensureAudioContext() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+}
+
+function playHitSound(tier) {
+  if (!audioCtx) return;
+  const freqs = { perfect: 880, good: 660, ok: 440, miss: 180 };
+  const durs = { perfect: 0.08, good: 0.06, ok: 0.045, miss: 0.1 };
+  const duration = durs[tier] || 0.06;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = tier === 'miss' ? 'sawtooth' : 'sine';
+  osc.frequency.value = tier === 'miss' ? 120 : freqs[tier] || 440;
+  gain.gain.setValueAtTime(0.12 * (volume || 0.5), audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + duration);
+  if (tier === 'miss') {
+    const noiseOsc = audioCtx.createOscillator();
+    const noiseGain = audioCtx.createGain();
+    noiseOsc.type = 'square';
+    noiseOsc.frequency.value = 70;
+    noiseGain.gain.setValueAtTime(0.04 * (volume || 0.5), audioCtx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
+    noiseOsc.connect(noiseGain).connect(audioCtx.destination);
+    noiseOsc.start(audioCtx.currentTime);
+    noiseOsc.stop(audioCtx.currentTime + 0.04);
+  }
+}
+
 async function initAudio() {
+  ensureAudioContext();
   const song = SONGS[selectedSong];
   if (musicPlayer.src !== song.url) {
     musicPlayer.src = song.url;
@@ -765,20 +785,18 @@ function sectionTransition(nextSection) {
 }
 
 function noteEdge(index) {
-  const side = (index * 7 + Math.floor(index / 8)) % 4;
-  const p = 90 + ((index * 83) % 382);
-  if (side === 0) return { x: p * 2, y: -35 };
-  if (side === 1) return { x: 1035, y: p };
-  if (side === 2) return { x: p * 2, y: 597 };
-  return { x: -35, y: p };
+  const side = index % 4;
+  const x = 120 + ((index * 59) % 760);
+  const y = 90 + ((index * 83) % 382);
+  if (side === 0) return { x, y: -35 };
+  if (side === 1) return { x, y: 597 };
+  if (side === 2) return { x: -35, y };
+  return { x: 1035, y };
 }
 function makeCurve(start, index, suffix = '') {
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   path.id = `flight-${index}-${suffix}-${Math.random().toString(36).slice(2)}`;
-  const bend = ((index % 5) - 2) * 44;
-  const cx = (start.x + 500) / 2 + (start.y > 281 ? bend : -bend);
-  const cy = (start.y + 281) / 2 + (start.x > 500 ? -bend : bend);
-  path.setAttribute('d', `M${start.x},${start.y} Q${cx},${cy} 500,281`);
+  path.setAttribute('d', `M${start.x},${start.y} L500,281`);
   path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'none');
   flightSvg.appendChild(path);
   return path;
@@ -894,6 +912,7 @@ function judgeHit() {
   const base = tier === 'perfect' ? 300 : tier === 'good' ? 200 : 100;
   score += base * multiplierFor(combo);
   updateHud();
+  playHitSound(tier);
   hitFeedback(tier, delta);
   if (combo % 5 === 0) comboMilestone();
 }
@@ -904,6 +923,7 @@ function registerMiss(note, reason = 'MISS') {
     note.judged = true; removeNoteVisual(note);
   }
   combo = 0; judged++; stats.miss++; updateHud();
+  playHitSound('miss');
   hitFeedback('miss', 0, reason);
 }
 
@@ -936,13 +956,6 @@ function hitFeedback(tier, delta, reason) {
   }
 
   animate('#targetRing', { scale:[.95,1.32,.97,1.06,1], rotate:[0,8,-3,1,0], duration:560, ease:spring({ stiffness:220, damping:11 }) });
-  animate('#hitRing', {
-    color: colors[tier],
-    opacity:[0,.85,.35,0],
-    scale:[0,1.5],
-    duration:360,
-    ease:'outQuad'
-  });
   burstParticles(tier === 'perfect' ? 8 : tier === 'good' ? 6 : 4, colors[tier]);
   const awarded = (tier === 'perfect' ? 300 : tier === 'good' ? 200 : 100) * multiplierFor(combo);
   const pop = document.createElement('div'); pop.className = 'score-pop'; pop.textContent = `+${awarded}`;
@@ -1079,6 +1092,19 @@ function gameLoop(token) {
     if (!note.judged) updateNotePosition(note, now);
     if (!note.judged && now > note.targetTime + .15) registerMiss(note);
   });
+  const nearest = notes
+    .filter(note => !note.judged)
+    .reduce((best, note) => !best || Math.abs(note.targetTime - now) < Math.abs(best.targetTime - now) ? note : best, null);
+  if (nearest && Math.abs(nearest.targetTime - now) < .3) {
+    const color = nearest.el?.style?.color || 'var(--accent-2)';
+    $('#targetRing').style.color = color;
+    $('#targetRing').style.borderColor = color;
+    $('#targetRing').style.boxShadow = '0 0 25px currentColor, inset 0 0 25px currentColor';
+  } else {
+    $('#targetRing').style.color = '';
+    $('#targetRing').style.borderColor = '';
+    $('#targetRing').style.boxShadow = '';
+  }
   if (musicPlayer.ended || now >= chartStart + SONG_DURATION + .45) finishGame();
   else frameRequest=requestAnimationFrame(()=>gameLoop(token));
 }
